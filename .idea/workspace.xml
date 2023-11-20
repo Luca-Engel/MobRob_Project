@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="create .gitignore">
-      <change afterPath="$PROJECT_DIR$/aruco/marker_recognition.py" afterDir="false" />
+    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="marker detection on 4x4 markers works">
+      <change afterPath="$PROJECT_DIR$/opencv/object_recognition.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/aruco/marker_recognition.py" beforeDir="false" afterPath="$PROJECT_DIR$/aruco/marker_recognition.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/opencv/webcam_input.py" beforeDir="false" afterPath="$PROJECT_DIR$/opencv/webcam_input.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -129,7 +130,9 @@
       <workItem from="1700314283250" duration="687000" />
       <workItem from="1700314985853" duration="62000" />
       <workItem from="1700315049663" duration="7000" />
-      <workItem from="1700315067856" duration="1342000" />
+      <workItem from="1700315067856" duration="2906000" />
+      <workItem from="1700472961301" duration="167000" />
+      <workItem from="1700473245941" duration="3657000" />
     </task>
     <task id="LOCAL-00001" summary="initialize aruco package">
       <created>1700221808513</created>
@@ -154,7 +157,15 @@
       <option name="project" value="LOCAL" />
       <updated>1700304249820</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="marker detection on 4x4 markers works">
+      <option name="closed" value="true" />
+      <created>1700316669700</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1700316669700</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -165,7 +176,8 @@
     <MESSAGE value="create camera-feed class" />
     <MESSAGE value="add aruco marker images to project" />
     <MESSAGE value="create .gitignore" />
-    <option name="LAST_COMMIT_MESSAGE" value="create .gitignore" />
+    <MESSAGE value="marker detection on 4x4 markers works" />
+    <option name="LAST_COMMIT_MESSAGE" value="marker detection on 4x4 markers works" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -179,7 +191,7 @@
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/MobRob_Project$marker_recognition.coverage" NAME="marker_recognition Coverage Results" MODIFIED="1700316353798" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aruco" />
+    <SUITE FILE_PATH="coverage/MobRob_Project$marker_recognition.coverage" NAME="marker_recognition Coverage Results" MODIFIED="1700476915054" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aruco" />
     <SUITE FILE_PATH="coverage/MobRob_Project$webcam_input.coverage" NAME="webcam_input Coverage Results" MODIFIED="1700316012983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
   </component>
 </project>
