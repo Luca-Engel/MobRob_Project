@@ -88,6 +88,8 @@ class GridMap:
         x, y = self._convert_to_grid_indices(thymio_marker_corners, video_feed_width, video_feed_height)
         if value == CellType.GOAL:
             self.goal_location = (x, y)
+        elif value == CellType.THYMIO:
+            self.thymio_location = (x, y)
 
         # Update grid with value in a 20x20 square around the marker
         for i in range(x - 10, x + 10):
@@ -121,7 +123,15 @@ class GridMap:
         cv2.destroyAllWindows()
 
     def get_goal_location(self):
+        if self.goal_location is None:
+            return (0, 0)
+
         return self.goal_location
+
+    def get_thymio_location(self):
+        if self.thymio_location is None:
+            return (0, 0)
+        return self.thymio_location
 
 
 if __name__ == "__main__":
