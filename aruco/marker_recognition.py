@@ -36,7 +36,8 @@ class ArUcoMarkerDetector:
             The corners of the detected markers, the ids of the detected markers,
             the frame with markers drawn on it, the direction (orientation) of the markers.
         """
-        frame = self.webcam_feed.single_capture_and_display()
+        base_frame = self.webcam_feed.single_capture_and_display()
+        frame = base_frame.copy()
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         parameters = aruco.DetectorParameters()
@@ -77,7 +78,7 @@ class ArUcoMarkerDetector:
         if self.webcam_feed.user_has_quit():
             self.webcam_feed.release_resources()
 
-        return corners, ids, frame_markers, ids_to_direction
+        return corners, ids, frame_markers, ids_to_direction, base_frame
 
     def get_image_corner_coordinates(self, corners, ids, image_corner_ids=[0, 1, 2, 3]):
         """
@@ -110,6 +111,6 @@ if __name__ == "__main__":
             webcam.release_resources()
             break
 
-        corners, ids, frame_markers, ids_to_direction = aruco_detector.detect_markers()
+        corners, ids, frame_markers, ids_to_direction, base_frame = aruco_detector.detect_markers()
 
     print("Done.")

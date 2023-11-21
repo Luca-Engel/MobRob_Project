@@ -49,7 +49,6 @@ class GridMap:
 
     def update_grid(self):
         contours, binary_image, frame_with_objects, corners, ids = self.object_detector.detect_objects()
-        print("frame types: ", frame_with_objects.dtype)
 
         print(binary_image)
         image_height = len(binary_image)
@@ -65,12 +64,10 @@ class GridMap:
                     self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.OBJECT)
 
         if self.thymio_marker_id in ids:
-            print("thymio check corners shape:", corners.shape)
             corners_for_thymio = corners[np.where(ids == self.thymio_marker_id)[0]][0]
             self._update_grid_with_marker(corners_for_thymio, CellType.THYMIO, len(binary_image[0]), len(binary_image))
 
         if self.goal_marker_id in ids:
-            print("thymio check corners shape:", corners.shape)
             corners_for_thymio = corners[np.where(ids == self.goal_marker_id)[0]][0]
             self._update_grid_with_marker(corners_for_thymio, CellType.GOAL, len(binary_image[0]), len(binary_image))
 
@@ -101,9 +98,6 @@ class GridMap:
     def _convert_to_grid_indices(self, corners, video_feed_width, video_feed_height):
         centroid = np.mean(corners, axis=0)
 
-        print("centroid: ", centroid)
-        print(corners.shape)
-        print(centroid.shape)
         # Convert corner coordinates to grid indices
         x = int(centroid[0] / video_feed_width * self.width)
         y = int(centroid[1] / video_feed_height * self.height)

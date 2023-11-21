@@ -13,7 +13,7 @@ class ObjectDetector:
         self.aruco_marker_detector = aruco_marker_detector
 
     def detect_objects(self):
-        corners, ids, frame_markers, ids_to_direction = self.aruco_marker_detector.detect_markers()
+        corners, ids, frame_markers, ids_to_direction, base_frame = self.aruco_marker_detector.detect_markers()
 
         if (ids is not None) and (len(ids) > 4):
             top_left_aruco = corners[np.where(ids == 0)[0][0]]
@@ -22,16 +22,15 @@ class ObjectDetector:
             bottom_left_aruco = corners[np.where(ids == 3)[0][0]]
 
             # Get the binary image with black objects on a white background, excluding ArUco markers
-            binary_image = self._extract_black_objects(frame_markers, [top_left_aruco, top_right_aruco, bottom_right_aruco,
+            binary_image = self._extract_black_objects(base_frame, [top_left_aruco, top_right_aruco, bottom_right_aruco,
                                                                    bottom_left_aruco])
         else:
-            binary_image = self._extract_black_objects(frame_markers,
-                                                       [])
+            binary_image = self._extract_black_objects(base_frame, [])
 
         # Find contours of black objects
         contours, _ = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # Draw contours on the original frame
+        # Draw contours on the marker frame
         frame_with_objects = frame_markers.copy()
         cv2.drawContours(frame_with_objects, contours, -1, (0, 0, 255), 2)
 
