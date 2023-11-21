@@ -39,6 +39,9 @@ class ObjectDetector:
         if self.aruco_marker_detector.webcam_feed.user_has_quit():
             self.aruco_marker_detector.release_resources()
 
+
+        return contours, binary_image, frame_with_objects
+
     def _extract_black_objects(self, frame, corner_aruco_markers):
         """
         Extract the black objects from a frame.
@@ -54,6 +57,7 @@ class ObjectDetector:
 
 
         # Threshold the image to get binary image with black objects on white background
+        # binary image is 0 where no black object is detected, 255 where black object is detected
         _, binary_image = cv2.threshold(gray_frame, 60, 255, cv2.THRESH_BINARY_INV)
 
         return binary_image
