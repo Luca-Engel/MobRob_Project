@@ -87,6 +87,8 @@ class GridMap:
         thymio_marker_corners = corner[0]
         # find centroid of the corners in grid coordinates
         x, y = self._convert_to_grid_indices(thymio_marker_corners, video_feed_width, video_feed_height)
+        if value == CellType.GOAL:
+            self.goal_location = (x, y)
 
         # Update grid with value in a 20x20 square around the marker
         for i in range(x - 10, x + 10):
@@ -119,6 +121,9 @@ class GridMap:
     def release_resources(self):
         self.webcam.release_resources()
         cv2.destroyAllWindows()
+
+    def get_goal_location(self):
+        return self.goal_location
 
 
 if __name__ == "__main__":

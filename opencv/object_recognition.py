@@ -4,6 +4,9 @@ import numpy as np
 from opencv.webcam_input import WebcamFeed
 from aruco.marker_recognition import ArUcoMarkerDetector
 
+THRESHOLD_MAX_VAL = 255
+OBJECT_THRESHOLD = 60
+
 
 class ObjectDetector:
     def __init__(self, aruco_marker_detector):
@@ -58,7 +61,7 @@ class ObjectDetector:
 
         # Threshold the image to get binary image with black objects on white background
         # binary image is 0 where no black object is detected, 255 where black object is detected
-        _, binary_image = cv2.threshold(gray_frame, 60, 255, cv2.THRESH_BINARY_INV)
+        _, binary_image = cv2.threshold(gray_frame, OBJECT_THRESHOLD, THRESHOLD_MAX_VAL, cv2.THRESH_BINARY_INV)
 
         return binary_image
 
