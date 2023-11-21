@@ -40,7 +40,7 @@ class ObjectDetector:
             self.aruco_marker_detector.release_resources()
 
 
-        return contours, binary_image, frame_with_objects
+        return contours, binary_image, frame_with_objects, corners, ids
 
     def _extract_black_objects(self, frame, corner_aruco_markers):
         """
