@@ -11,6 +11,8 @@ class CellType(enum.Enum):
     FREE = '_'
     OBJECT = 'x'
     MARKER = 'm'
+    THYMIO = 't'
+    GOAL = 'g'
 
     def __str__(self):
         return self.value
