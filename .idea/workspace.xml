@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="grid map only evaluated once (at instantiation)">
+    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="spot of thymio marked on the map">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/map/GridMap.py" beforeDir="false" afterPath="$PROJECT_DIR$/map/GridMap.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/opencv/object_recognition.py" beforeDir="false" afterPath="$PROJECT_DIR$/opencv/object_recognition.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -180,7 +179,7 @@
       <workItem from="1700473245941" duration="4510000" />
       <workItem from="1700487372896" duration="53000" />
       <workItem from="1700495641895" duration="9000" />
-      <workItem from="1700510460652" duration="11524000" />
+      <workItem from="1700510460652" duration="13038000" />
     </task>
     <task id="LOCAL-00001" summary="initialize aruco package">
       <created>1700221808513</created>
@@ -253,7 +252,15 @@
       <option name="project" value="LOCAL" />
       <updated>1700558026599</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="spot of thymio marked on the map">
+      <option name="closed" value="true" />
+      <created>1700559964786</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1700559964786</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -270,7 +277,8 @@
     <MESSAGE value="conversion of image with obstacles to grid with cells works" />
     <MESSAGE value="add thymio and goal cell types" />
     <MESSAGE value="grid map only evaluated once (at instantiation)" />
-    <option name="LAST_COMMIT_MESSAGE" value="grid map only evaluated once (at instantiation)" />
+    <MESSAGE value="spot of thymio marked on the map" />
+    <option name="LAST_COMMIT_MESSAGE" value="spot of thymio marked on the map" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -286,7 +294,7 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/MobRob_Project$marker_recognition.coverage" NAME="marker_recognition Coverage Results" MODIFIED="1700511190413" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aruco" />
     <SUITE FILE_PATH="coverage/MobRob_Project$webcam_input.coverage" NAME="webcam_input Coverage Results" MODIFIED="1700316012983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
-    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700559827348" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
+    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700561319357" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
     <SUITE FILE_PATH="coverage/MobRob_Project$object_recognition.coverage" NAME="object_recognition Coverage Results" MODIFIED="1700554797977" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
   </component>
 </project>

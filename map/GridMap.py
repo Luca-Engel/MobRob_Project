@@ -18,10 +18,11 @@ class CellType(enum.Enum):
         return self.value
 class GridMap:
 
-    def __init__(self, width, height, thymio_marker_id = 0):
+    def __init__(self, width, height, thymio_marker_id = 0, goal_marker_id = 1):
         self.width = width
         self.height = height
         self.thymio_marker_id = thymio_marker_id
+        self.goal_marker_id = goal_marker_id
 
         self.webcam = WebcamFeed()
         self.aruco_detector = ArUcoMarkerDetector(self.webcam)
@@ -30,10 +31,25 @@ class GridMap:
         self.grid = np.full((height, width), CellType.FREE, dtype='object')
         self.update_grid()
 
-        self.grid_image = np.vectorize(lambda x: 255 if x == CellType.FREE else (150 if x == CellType.THYMIO else 0))(self.grid).astype(np.uint8)
+        color_mapping = {
+            CellType.FREE: (255, 255, 255),  # White
+            CellType.THYMIO: (0, 255, 0),  # Green
+            CellType.OBJECT: (0, 0, 0),  # Black
+            CellType.MARKER: (0, 0, 255),  # Red
+            CellType.GOAL: (255, 0, 0)  # Blue
+        }
+        # self.grid_image = np.vectorize(lambda x: 255 if x == CellType.FREE else (150 if x == CellType.THYMIO else 0))(self.grid).astype(np.uint8)
+        self.grid_image = np.vectorize(lambda x: color_mapping.get(x, (0, 0, 0)))(self.grid)
+
+        self.grid_image = np.stack(self.grid_image, axis=-1)
+
+        # Convert to uint8 for imshow
+        self.grid_image = self.grid_image.astype(np.uint8)
+
+
     def update_grid(self):
         contours, binary_image, frame_with_objects, corners, ids = self.object_detector.detect_objects()
-
+        print("frame types: ", frame_with_objects.dtype)
 
         print(binary_image)
         image_height = len(binary_image)
@@ -53,6 +69,11 @@ class GridMap:
             corners_for_thymio = corners[np.where(ids == self.thymio_marker_id)[0]][0]
             self._update_grid_with_marker(corners_for_thymio, CellType.THYMIO, len(binary_image[0]), len(binary_image))
 
+        if self.goal_marker_id in ids:
+            print("thymio check corners shape:", corners.shape)
+            corners_for_thymio = corners[np.where(ids == self.goal_marker_id)[0]][0]
+            self._update_grid_with_marker(corners_for_thymio, CellType.GOAL, len(binary_image[0]), len(binary_image))
+
     def _update_grid_with_object(self, row_pixel, column_pixel, image_width, image_height, value):
         # print("row_pixel: ", row_pixel)
         # print("column_pixel: ", column_pixel)
@@ -64,14 +85,16 @@ class GridMap:
 
     def _update_grid_with_marker(self, corner, value, video_feed_width, video_feed_height):
         thymio_marker_corners = corner[0]
-        # Convert corner coordinates to grid indices
+        # find centroid of the corners in grid coordinates
         x, y = self._convert_to_grid_indices(thymio_marker_corners, video_feed_width, video_feed_height)
 
-        # Update the grid with the specified value in a square region around the marker
+        # Update grid with value in a 20x20 square around the marker
         for i in range(x - 10, x + 10):
             for j in range(y - 10, y + 10):
                 if 0 <= i < self.width and 0 <= j < self.height:
-                    self.grid[j, i] = value
+                    # draw circle in grid
+                    if (i - x) ** 2 + (j - y) ** 2 <= 10 ** 2:
+                        self.grid[j, i] = value
 
     def _convert_to_grid_indices(self, corners, video_feed_width, video_feed_height):
         centroid = np.mean(corners, axis=0)
@@ -102,8 +125,9 @@ if __name__ == "__main__":
     # Sample usage:
     width, height = 320, 240
     thymio_marker_id = 0
+    goal_marker_id = 1
 
-    grid_map = GridMap(width, height, thymio_marker_id)
+    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id)
 
     while True:
         grid_map.display_feed()
