@@ -18,29 +18,27 @@ class CellType(enum.Enum):
         return self.value
 class GridMap:
 
-    def __init__(self, width, height, object_detector):
+    def __init__(self, width, height):
         self.width = width
         self.height = height
         self.grid = np.full((height, width), CellType.FREE, dtype='object')
-        self.object_detector = object_detector
+
+        self.webcam = WebcamFeed()
+        self.aruco_detector = ArUcoMarkerDetector(self.webcam)
+        self.object_detector = ObjectDetector(self.aruco_detector)
+
+        self.update_grid()
+        self.grid_image = np.vectorize((lambda x: 255 if x == CellType.FREE else 0))(self.grid).astype(np.uint8)
 
     def update_grid(self):
         contours, binary_image, frame_with_objects = self.object_detector.detect_objects()
 
-        print("binary image shape:", binary_image.shape)
-        print("binary image element types:", binary_image.dtype)
-        # if ids is not None:
-        #     for i, corner in enumerate(corners):
-        #         if ids[i] == 4:
-        #             # ArUco marker with id 4
-        #             self._update_grid_with_marker(corner, CellType.MARKER)
-        #         else:
-        #             # ArUco markers with ids 0-3
-        #             self._update_grid_with_marker(corner, CellType.OBJECT)
-
+        print(binary_image)
         image_height = len(binary_image)
         image_width = len(binary_image[0])
 
+        print("width: ", image_width)
+        print("height: ", image_height)
         for row_pixel in range(image_height):
             for column_pixel in range(image_width):
                 if binary_image[row_pixel][column_pixel] < 100: # no object
@@ -49,8 +47,10 @@ class GridMap:
                     self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.OBJECT)
 
     def _update_grid_with_object(self, row_pixel, column_pixel, image_width, image_height, value):
+        # print("row_pixel: ", row_pixel)
+        # print("column_pixel: ", column_pixel)
         x = int(column_pixel / image_width * self.width)
-        y = int(row_pixel / image_height * self.width)
+        y = int(row_pixel / image_height * self.height)
 
         self.grid[y, x] = value
 
@@ -72,26 +72,31 @@ class GridMap:
         return x, y
 
     def display_grid_as_image(self):
-        grid_image = np.vectorize((lambda x: 255 if x == CellType.FREE else 0))(self.grid).astype(np.uint8)
+        cv2.imshow("grid map", self.grid_image)
 
-        cv2.imshow("grid map", grid_image)
+    def display_feed(self):
+        contours, binary_image, frame_with_objects = self.object_detector.detect_objects()
+
+    def user_has_quit(self):
+        return self.webcam.user_has_quit()
+
+    def release_resources(self):
+        self.webcam.release_resources()
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
     # Sample usage:
-    width, height = 100, 100
-    webcam = WebcamFeed()
-    aruco_detector = ArUcoMarkerDetector(webcam)
-    object_detector = ObjectDetector(aruco_detector)
-    grid_map = GridMap(width, height, object_detector)
+    width, height = 300, 250
+
+    grid_map = GridMap(width, height)
 
     while True:
-        object_detector.detect_objects()
-        grid_map.update_grid()
+        grid_map.display_feed()
         grid_map.display_grid_as_image()
 
-        if webcam.user_has_quit():
-            webcam.release_resources()
+        if grid_map.user_has_quit():
+            grid_map.release_resources()
             break
 
     print("Done.")
