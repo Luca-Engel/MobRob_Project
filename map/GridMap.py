@@ -39,11 +39,11 @@ class GridMap:
         self.update_grid()
 
         color_mapping = {
-            CellType.FREE: (255, 255, 255),  # White
-            CellType.THYMIO: (0, 255, 0),  # Green
-            CellType.OBJECT: (0, 0, 0),  # Black
-            CellType.MARKER: (0, 0, 255),  # Red
-            CellType.GOAL: (255, 0, 0)  # Blue
+            CellType.FREE: (255, 255, 255), # White
+            CellType.THYMIO: (0, 255, 0), # Green
+            CellType.OBJECT: (0, 0, 0), # Black
+            CellType.MARKER: (0, 0, 255), # Red
+            CellType.GOAL: (255, 0, 0) # Blue
         }
         self.grid_image = np.vectorize(lambda x: color_mapping.get(x, (0, 0, 0)))(self.grid)
 
