@@ -1,6 +1,7 @@
 import cv2
 import cv2.aruco as aruco
 import numpy as np
+import os
 
 from opencv.webcam_input import WebcamFeed
 
@@ -29,14 +30,17 @@ class ArUcoMarkerDetector:
 
         print("aruco_detector initialized.")
 
-    def detect_markers(self):
+    def detect_markers(self, base_frame=None):
         """
         Detect ArUco markers in the webcam feed. Display the frame with markers.
         :return: corners, ids, frame_markers, ids_to_direction -->
             The corners of the detected markers, the ids of the detected markers,
             the frame with markers drawn on it, the direction (orientation) of the markers.
         """
-        base_frame = self.webcam_feed.single_capture_and_display()
+        # to test with image, remove the next two lines
+        if base_frame is None:
+            base_frame = self.webcam_feed.single_capture_and_display()
+
         frame = base_frame.copy()
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -80,6 +84,55 @@ class ArUcoMarkerDetector:
 
         return corners, ids, frame_markers, ids_to_direction, base_frame
 
+    def process_image_with_aruco_markers(self):
+        """
+        Process the image by adjusting it based on the detected ArUco markers.
+        :param frame: The frame to be processed.
+        :return: The processed frame.
+        """
+        # # to test with an image:
+        # frame = cv2.imread('./side_image.png')
+        # print(frame)
+        # corners, ids, frame_markers, ids_to_direction, base_frame = self.detect_markers(frame)
+
+        corners, ids, frame_markers, ids_to_direction, base_frame = self.detect_markers()
+
+        if ids is None or len(ids) < 1:
+            return frame_markers, corners, ids, frame_markers, ids_to_direction, base_frame
+
+        detected_markers = zip(ids.reshape(-1), corners.reshape(-1, 4, 2))
+
+        # Create a dictionary to store the detected markers' positions
+        marker_for_corner = {0: None, 1: None, 2: None, 3: None}
+
+        # Find the positions of the detected markers
+        for marker_id, marker_corners in detected_markers:
+            if (marker_id > 3):
+                continue
+            marker_for_corner[marker_id] = marker_corners[marker_id]
+
+
+        print("marker corners\n", marker_for_corner)
+        processed_frame = frame_markers
+        if all(position is not None for position in marker_for_corner.values()):
+            # Sort markers by id (transform need them sorted from top left clockwise 0-3)
+            sorted_marker_positions = [marker_for_corner[i] for i in range(4)]
+            new_corners = np.array(sorted_marker_positions)
+            # top_left, top_right, bottom_right, bottom_left = sorted_marker_positions
+            # new_corners = np.array([top_left, top_right, bottom_right, bottom_left])
+
+            # Perspective transformation to adjust the image to have the markers in the corners
+            h, w = frame_markers.shape[:2]
+            destination_corners = np.array([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]], dtype=np.float32)
+
+            transformation_matrix = cv2.getPerspectiveTransform(np.float32(new_corners), destination_corners)
+            processed_frame = cv2.warpPerspective(frame_markers, transformation_matrix, (w, h))
+            base_frame = cv2.warpPerspective(base_frame, transformation_matrix, (w, h))
+
+
+            print("frames have been processed")
+        return processed_frame, corners, ids, frame_markers, ids_to_direction, base_frame
+
     def get_image_corner_coordinates(self, corners, ids, image_corner_ids=[0, 1, 2, 3]):
         """
         Get the coordinates of the corners of an image.
@@ -100,6 +153,22 @@ class ArUcoMarkerDetector:
 
 
 if __name__ == "__main__":
+    # webcam = WebcamFeed()
+    # aruco_detector = ArUcoMarkerDetector(webcam)
+    #
+    # while True:
+    #     # webcam.single_capture_and_display()
+    #
+    #     # if webcam.user_has_quit():
+    #     #     webcam.release_resources()
+    #     #     break
+    #
+    #     frame = aruco_detector.process_image_with_aruco_markers()
+    #     cv2.imshow("Processed Image", frame)
+
+
+
+
     # sample usage:
     webcam = WebcamFeed()
     aruco_detector = ArUcoMarkerDetector(webcam)
@@ -111,6 +180,9 @@ if __name__ == "__main__":
             webcam.release_resources()
             break
 
-        corners, ids, frame_markers, ids_to_direction, base_frame = aruco_detector.detect_markers()
+        processed_frame, corners, ids, frame_markers, ids_to_direction, base_frame = aruco_detector.process_image_with_aruco_markers()
+
+        cv2.imshow("frame_markers", frame_markers)
+        cv2.imshow("processed_frame", processed_frame)
 
     print("Done.")

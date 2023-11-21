@@ -31,10 +31,14 @@ class WebcamFeed:
         self.camera_index = camera_index
         self.cap_show = cap_show
         self.window_name = window_name + ' - Press q to quit - Started at ' + str(current_time)
+
+        # to test with image, remove these lines until...
         self.cap = cv2.VideoCapture(self.camera_index, self.cap_show)
 
         if not self.cap.isOpened():
             raise ValueError("Error: Could not open webcam.")
+        # ...here
+
 
         # cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
 
@@ -59,6 +63,11 @@ class WebcamFeed:
         :return: The captured frame as an ndarray. If the frame capture is unsuccessful, the frame will be None.
         """
         ret, frame = self.cap.read()
+
+        if cv2.waitKey(1) & 0xFF == ord('s'):
+            print("Saving image...")
+            cv2.imwrite('saved_image.png', frame)
+            print("Image saved.")
 
         if not ret:
             print("Error: Failed to capture frame.")

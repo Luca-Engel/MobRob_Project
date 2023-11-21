@@ -123,8 +123,8 @@ class GridMap:
 if __name__ == "__main__":
     # Sample usage:
     width, height = 320, 240
-    thymio_marker_id = 0
-    goal_marker_id = 1
+    thymio_marker_id = 4
+    goal_marker_id = 5
 
     grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id)
 

@@ -13,9 +13,11 @@ class ObjectDetector:
         self.aruco_marker_detector = aruco_marker_detector
 
     def detect_objects(self):
-        corners, ids, frame_markers, ids_to_direction, base_frame = self.aruco_marker_detector.detect_markers()
+        processed_frame, corners, ids, frame_markers, ids_to_direction, base_frame = self.aruco_marker_detector.process_image_with_aruco_markers()
 
-        if (ids is not None) and (len(ids) > 4):
+        # cv2.imshow('Base Frame', base_frame)
+
+        if (ids is not None and 0 in ids and 1 in ids and 2 in ids and 3 in ids):
             top_left_aruco = corners[np.where(ids == 0)[0][0]]
             top_right_aruco = corners[np.where(ids == 1)[0][0]]
             bottom_right_aruco = corners[np.where(ids == 2)[0][0]]
@@ -31,7 +33,7 @@ class ObjectDetector:
         contours, _ = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         # Draw contours on the marker frame
-        frame_with_objects = frame_markers.copy()
+        frame_with_objects = processed_frame.copy()
         cv2.drawContours(frame_with_objects, contours, -1, (0, 0, 255), 2)
 
         # Display the frame with objects
