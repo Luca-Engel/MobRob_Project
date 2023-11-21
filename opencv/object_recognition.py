@@ -13,7 +13,8 @@ class ObjectDetector:
         self.aruco_marker_detector = aruco_marker_detector
 
     def detect_objects(self):
-        processed_frame, corners, ids, frame_markers, ids_to_direction, base_frame = self.aruco_marker_detector.process_image_with_aruco_markers()
+        processed_frame, corners, ids, frame_markers, ids_to_direction, base_frame = (
+            self.aruco_marker_detector.process_image_with_aruco_markers())
 
         # cv2.imshow('Base Frame', base_frame)
 
@@ -35,9 +36,6 @@ class ObjectDetector:
         # Draw contours on the marker frame
         frame_with_objects = processed_frame.copy()
         cv2.drawContours(frame_with_objects, contours, -1, (0, 0, 255), 2)
-
-        # Display the frame with objects
-        cv2.imshow('Object Detection', frame_with_objects)
 
         # Press 'q' to exit the loop
         if self.aruco_marker_detector.webcam_feed.user_has_quit():
@@ -124,7 +122,9 @@ if __name__ == "__main__":
     object_detector = ObjectDetector(aruco_detector)
 
     while True:
-        object_detector.detect_objects()
+        contours, binary_image, frame_with_objects, corners, ids = object_detector.detect_objects()
+
+        cv2.imshow('Object Detection', frame_with_objects)
 
         if webcam.user_has_quit():
             webcam.release_resources()

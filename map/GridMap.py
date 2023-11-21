@@ -107,7 +107,9 @@ class GridMap:
         cv2.imshow("grid map", self.grid_image)
 
     def display_feed(self):
-        _ = self.object_detector.detect_objects()
+        contours, binary_image, frame_with_objects, corners, ids = self.object_detector.detect_objects()
+
+        cv2.imshow("Current Feed", frame_with_objects)
 
     def user_has_quit(self):
         return self.webcam.user_has_quit()

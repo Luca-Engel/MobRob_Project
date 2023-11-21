@@ -4,13 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="add map obstacles word file">
-      <change afterPath="$PROJECT_DIR$/opencv/reframe_image.py" afterDir="false" />
+    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="process frames to place corner markers at the edge">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/aruco/marker_recognition.py" beforeDir="false" afterPath="$PROJECT_DIR$/aruco/marker_recognition.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/map/GridMap.py" beforeDir="false" afterPath="$PROJECT_DIR$/map/GridMap.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/opencv/object_recognition.py" beforeDir="false" afterPath="$PROJECT_DIR$/opencv/object_recognition.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/opencv/webcam_input.py" beforeDir="false" afterPath="$PROJECT_DIR$/opencv/webcam_input.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,7 +62,7 @@
       <recent name="C:\Users\LucaS\OneDrive - epfl.ch\EPFL\MA1\Mob_Robotics\MobRob_Project\aruco" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.object_recognition">
+  <component name="RunManager" selected="Python.GridMap">
     <configuration name="GridMap" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="MobRob_Project" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -158,9 +153,9 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.GridMap" />
         <item itemvalue="Python.object_recognition" />
         <item itemvalue="Python.marker_recognition" />
-        <item itemvalue="Python.GridMap" />
         <item itemvalue="Python.webcam_input" />
       </list>
     </recent_temporary>
@@ -187,7 +182,8 @@
       <workItem from="1700487372896" duration="53000" />
       <workItem from="1700495641895" duration="9000" />
       <workItem from="1700510460652" duration="14973000" />
-      <workItem from="1700570820350" duration="6979000" />
+      <workItem from="1700570820350" duration="7365000" />
+      <workItem from="1700580097049" duration="723000" />
     </task>
     <task id="LOCAL-00001" summary="initialize aruco package">
       <created>1700221808513</created>
@@ -316,7 +312,15 @@
       <option name="project" value="LOCAL" />
       <updated>1700572015865</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="process frames to place corner markers at the edge">
+      <option name="closed" value="true" />
+      <created>1700578910640</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1700578910640</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -338,7 +342,8 @@
     <MESSAGE value="object recognition done on base frame (no arrows, etc.)" />
     <MESSAGE value="change threshold for object recognition" />
     <MESSAGE value="add map obstacles word file" />
-    <option name="LAST_COMMIT_MESSAGE" value="add map obstacles word file" />
+    <MESSAGE value="process frames to place corner markers at the edge" />
+    <option name="LAST_COMMIT_MESSAGE" value="process frames to place corner markers at the edge" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -354,7 +359,7 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/MobRob_Project$marker_recognition.coverage" NAME="marker_recognition Coverage Results" MODIFIED="1700578551708" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aruco" />
     <SUITE FILE_PATH="coverage/MobRob_Project$webcam_input.coverage" NAME="webcam_input Coverage Results" MODIFIED="1700316012983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
-    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700574224144" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
-    <SUITE FILE_PATH="coverage/MobRob_Project$object_recognition.coverage" NAME="object_recognition Coverage Results" MODIFIED="1700578795004" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
+    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700580136475" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
+    <SUITE FILE_PATH="coverage/MobRob_Project$object_recognition.coverage" NAME="object_recognition Coverage Results" MODIFIED="1700579861655" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
   </component>
 </project>
