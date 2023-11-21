@@ -19,10 +19,12 @@ class ArUcoMarkerDetector:
         """
 
     def __init__(self,
-                 webcam: WebcamFeed):
+                 webcam: WebcamFeed,
+                 thymio_marker_id = 0):
         print("Initializing aruco_detector...")
 
         self.webcam_feed = webcam
+        self.thymio_marker_id = thymio_marker_id
         self.marker_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 
         print("aruco_detector initialized.")
@@ -30,20 +32,17 @@ class ArUcoMarkerDetector:
     def detect_markers(self):
         """
         Detect ArUco markers in the webcam feed. Display the frame with markers.
-        :return: corners, ids, frame_markers --> The corners of the detected markers, the ids of the detected markers, and the frame with markers drawn on it.
+        :return: corners, ids, frame_markers, ids_to_direction -->
+            The corners of the detected markers, the ids of the detected markers,
+            the frame with markers drawn on it, the direction (orientation) of the markers.
         """
         frame = self.webcam_feed.single_capture_and_display()
-        # Convert the frame to grayscale
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         parameters = aruco.DetectorParameters()
-
         parameters.minMarkerPerimeterRate = 0.01
         # corners go clockwise from top left
         corners, ids, rejected_img_points = aruco.detectMarkers(gray, self.marker_dict, parameters=parameters)
-
-        if corners != None and len(corners) > 0:
-            print(corners)
 
         ids_to_direction = {}
 
@@ -54,7 +53,7 @@ class ArUcoMarkerDetector:
             for id in range(len(ids)):
                 top_left = corners[id][0][0]
                 bottom_left = corners[id][0][3]
-                top_middle = 1/2 * (corners[id][0][0] + corners[id][0][1])
+                top_middle = 1 / 2 * (corners[id][0][0] + corners[id][0][1])
 
                 # Calculate centroid (middle) of the marker
                 centroid = np.mean(corners[id][0], axis=0)
@@ -63,21 +62,37 @@ class ArUcoMarkerDetector:
                 direction = top_middle - centroid
                 ids_to_direction[id] = direction
 
+                # if id == self.thymio_marker_id:
                 cv2.arrowedLine(frame, tuple(map(int, centroid)),
-                                tuple(map(int, top_middle)), (0, 255, 0), thickness=2, tipLength=0.1)
+                                tuple(map(int, top_middle + direction)), (0, 255, 0), thickness=2, tipLength=0.1)
 
         # rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, 100)
 
         frame_markers = aruco.drawDetectedMarkers(frame.copy(), corners, ids)
 
         # Display the frame with markers
-        cv2.imshow('Aruco Marker Detection', frame_markers)
+        # cv2.imshow('Aruco Marker Detection', frame_markers)
 
         # Press 'q' to exit the loop
         if self.webcam_feed.user_has_quit():
             self.webcam_feed.release_resources()
 
         return corners, ids, frame_markers, ids_to_direction
+
+    def get_image_corner_coordinates(self, corners, ids, image_corner_ids=[0, 1, 2, 3]):
+        """
+        Get the coordinates of the corners of an image.
+        :param corners: The corners of the arUco markers.
+        :param ids: The ids of the arUco markers in the image.
+        :param image_corner_ids: The ids of the markers in the corners of the image.
+        :return: The coordinates of the corners of the image.
+        """
+        image_corner_coordinates = []
+        for i in range(len(ids)):
+            if ids[i][0] in image_corner_ids:
+                image_corner_coordinates.append(corners[i][0])
+
+        # map
 
     def release_resources(self):
         self.webcam_feed.release_resources()
@@ -95,6 +110,6 @@ if __name__ == "__main__":
             webcam.release_resources()
             break
 
-        corners, ids, frame_markers = aruco_detector.detect_markers()
+        corners, ids, frame_markers, ids_to_direction = aruco_detector.detect_markers()
 
     print("Done.")

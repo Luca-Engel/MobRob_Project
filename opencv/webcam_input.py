@@ -36,7 +36,7 @@ class WebcamFeed:
         if not self.cap.isOpened():
             raise ValueError("Error: Could not open webcam.")
 
-        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        # cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
 
         print("WebcamFeed initialized.")
 
@@ -64,7 +64,7 @@ class WebcamFeed:
             print("Error: Failed to capture frame.")
             return None
 
-        cv2.imshow(self.window_name, frame)
+        # cv2.imshow(self.window_name, frame)
 
         return frame
 
