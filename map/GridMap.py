@@ -16,9 +16,11 @@ class CellType(enum.Enum):
 
     def __str__(self):
         return self.value
+
+
 class GridMap:
 
-    def __init__(self, width, height, thymio_marker_id = 0, goal_marker_id = 1):
+    def __init__(self, width, height, thymio_marker_id=0, goal_marker_id=1):
         self.width = width
         self.height = height
         self.thymio_marker_id = thymio_marker_id
@@ -27,6 +29,11 @@ class GridMap:
         self.webcam = WebcamFeed()
         self.aruco_detector = ArUcoMarkerDetector(self.webcam)
         self.object_detector = ObjectDetector(self.aruco_detector)
+
+        while True:
+            if cv2.waitKey(1) & 0xFF == ord('b'):
+                break
+            cv2.imshow("Press b to initialize Map", self.webcam.single_capture_and_display())
 
         self.grid = np.full((height, width), CellType.FREE, dtype='object')
         self.update_grid()
@@ -38,14 +45,12 @@ class GridMap:
             CellType.MARKER: (0, 0, 255),  # Red
             CellType.GOAL: (255, 0, 0)  # Blue
         }
-        # self.grid_image = np.vectorize(lambda x: 255 if x == CellType.FREE else (150 if x == CellType.THYMIO else 0))(self.grid).astype(np.uint8)
         self.grid_image = np.vectorize(lambda x: color_mapping.get(x, (0, 0, 0)))(self.grid)
 
         self.grid_image = np.stack(self.grid_image, axis=-1)
 
         # Convert to uint8 for imshow
         self.grid_image = self.grid_image.astype(np.uint8)
-
 
     def update_grid(self):
         contours, binary_image, frame_with_objects, corners, ids = self.object_detector.detect_objects()
@@ -72,13 +77,10 @@ class GridMap:
             self._update_grid_with_marker(corners_for_thymio, CellType.GOAL, len(binary_image[0]), len(binary_image))
 
     def _update_grid_with_object(self, row_pixel, column_pixel, image_width, image_height, value):
-        # print("row_pixel: ", row_pixel)
-        # print("column_pixel: ", column_pixel)
         x = int(column_pixel / image_width * self.width)
         y = int(row_pixel / image_height * self.height)
 
         self.grid[y, x] = value
-
 
     def _update_grid_with_marker(self, corner, value, video_feed_width, video_feed_height):
         thymio_marker_corners = corner[0]

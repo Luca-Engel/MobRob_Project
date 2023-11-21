@@ -16,6 +16,8 @@ class ObjectDetector:
         processed_frame, corners, ids, frame_markers, ids_to_direction, base_frame = (
             self.aruco_marker_detector.process_image_with_aruco_markers())
 
+        cv2.imshow('base Frame', base_frame)
+
         # cv2.imshow('Base Frame', base_frame)
 
         if (ids is not None and 0 in ids and 1 in ids and 2 in ids and 3 in ids):

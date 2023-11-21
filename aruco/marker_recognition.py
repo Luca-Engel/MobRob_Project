@@ -129,6 +129,8 @@ class ArUcoMarkerDetector:
             processed_frame = cv2.warpPerspective(frame_markers, transformation_matrix, (w, h))
             base_frame = cv2.warpPerspective(base_frame, transformation_matrix, (w, h))
 
+            corners = cv2.perspectiveTransform(corners.reshape(-1, 1, 2), transformation_matrix).reshape(corners.shape)
+
 
             print("frames have been processed")
         return processed_frame, corners, ids, frame_markers, ids_to_direction, base_frame
