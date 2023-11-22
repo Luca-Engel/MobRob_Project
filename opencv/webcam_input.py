@@ -21,7 +21,7 @@ class WebcamFeed:
             The VideoCapture object to capture frames from the webcam.
     """
     def __init__(self,
-                 camera_index: int = 1,
+                 camera_index: int = 0,#1,
                  cap_show: int = cv2.CAP_DSHOW,
                  window_name: str = 'Webcam Feed'):
 

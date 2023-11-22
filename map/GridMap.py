@@ -104,6 +104,16 @@ class GridMap:
             for c in corners:
                 corner = c[0]
 
+                x_coords, y_coords = corner[:, 0], corner[:, 1]
+
+                # Get the minimum and maximum x, y coordinates to define the bounding box
+                min_x, max_x = int(min(x_coords)), int(max(x_coords))
+                min_y, max_y = int(min(y_coords)), int(max(y_coords))
+
+                # Iterate through every pixel in the bounding box
+                for x_image in range(min_x, max_x + 1):
+                    for y_image in range(min_y, max_y + 1):
+                        self._update_grid_with_object(y_image, x_image, len(binary_image[0]), len(binary_image), CellType.MARKER)
 
                 self.grid_image_is_up_to_date = False
 
