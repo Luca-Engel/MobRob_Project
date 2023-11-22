@@ -23,7 +23,8 @@ class WebcamFeed:
     def __init__(self,
                  camera_index: int = 0,#1,
                  cap_show: int = cv2.CAP_DSHOW,
-                 window_name: str = 'Webcam Feed'):
+                 window_name: str = 'Webcam Feed',
+                 load_from_file: str = None):
 
         print("Starting webcam feed...")
         current_time = datetime.now().strftime("%H:%M:%S")
@@ -33,11 +34,14 @@ class WebcamFeed:
         self.window_name = window_name + ' - Press q to quit - Started at ' + str(current_time)
 
         # to test with image, remove these lines until...
-        self.cap = cv2.VideoCapture(self.camera_index, self.cap_show)
 
-        if not self.cap.isOpened():
+        self.cap = None if load_from_file else cv2.VideoCapture(self.camera_index, self.cap_show)
+
+        if self.cap is not None and not self.cap.isOpened():
             raise ValueError("Error: Could not open webcam.")
         # ...here
+
+        self.load_from_file = load_from_file
 
 
         # cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
@@ -62,7 +66,12 @@ class WebcamFeed:
         Capture and display a single frame from the webcam. Does not loop --> Can be called from within another loop.
         :return: The captured frame as an ndarray. If the frame capture is unsuccessful, the frame will be None.
         """
+        if self.load_from_file is not None:
+            frame = cv2.imread(self.load_from_file)
+            return frame
+
         ret, frame = self.cap.read()
+
 
         if cv2.waitKey(1) & 0xFF == ord('s'):
             print("Saving image...")

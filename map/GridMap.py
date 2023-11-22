@@ -21,7 +21,7 @@ class CellType(enum.Enum):
 
 class GridMap:
 
-    def __init__(self, width, height, thymio_marker_id=0, goal_marker_id=1):
+    def __init__(self, width, height, thymio_marker_id=0, goal_marker_id=1, load_from_file=None):
         self.width = width
         self.height = height
         self.thymio_marker_id = thymio_marker_id
@@ -41,7 +41,7 @@ class GridMap:
             CellType.GOAL: (255, 0, 0)  # Blue
         }
 
-        self.webcam = WebcamFeed()
+        self.webcam = WebcamFeed(load_from_file=load_from_file)
         self.aruco_detector = ArUcoMarkerDetector(self.webcam)
         self.object_detector = ObjectDetector(self.aruco_detector)
 
@@ -148,7 +148,8 @@ class GridMap:
         x = int(column_pixel / image_width * self.width)
         y = int(row_pixel / image_height * self.height)
 
-        self.grid[y, x] = value
+        if 0 <= x < self.width and 0 <= y < self.height:
+            self.grid[y, x] = value
 
     def _update_grid_with_marker(self, corner, value, video_feed_width, video_feed_height, last_location=None):
         marker_corners = corner[0]
@@ -251,7 +252,7 @@ if __name__ == "__main__":
     thymio_marker_id = 4
     goal_marker_id = 5
 
-    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id)
+    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='side_image.png')
 
     while True:
         # TODO: Add code to update grid map and delete set the last location of the thymio and goal to FREE
