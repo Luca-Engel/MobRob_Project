@@ -111,8 +111,6 @@ class ArUcoMarkerDetector:
                 continue
             marker_for_corner[marker_id] = marker_corners[marker_id]
 
-
-        print("marker corners\n", marker_for_corner)
         processed_frame = frame_markers
         if all(position is not None for position in marker_for_corner.values()):
             # Sort markers by id (transform need them sorted from top left clockwise 0-3)
@@ -131,8 +129,6 @@ class ArUcoMarkerDetector:
 
             corners = cv2.perspectiveTransform(corners.reshape(-1, 1, 2), transformation_matrix).reshape(corners.shape)
 
-
-            print("frames have been processed")
         return processed_frame, corners, ids, frame_markers, ids_to_direction, base_frame
 
     def get_image_corner_coordinates(self, corners, ids, image_corner_ids=[0, 1, 2, 3]):

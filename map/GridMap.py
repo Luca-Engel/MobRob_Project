@@ -252,7 +252,13 @@ if __name__ == "__main__":
     thymio_marker_id = 4
     goal_marker_id = 5
 
-    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='side_image.png')
+    # load image from the webcam
+    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file=None)
+
+    # load image from file
+    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='side_image.png')
+    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='top_image.png')
+    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='corner_image.png')
 
     while True:
         # TODO: Add code to update grid map and delete set the last location of the thymio and goal to FREE

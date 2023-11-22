@@ -21,7 +21,7 @@ class WebcamFeed:
             The VideoCapture object to capture frames from the webcam.
     """
     def __init__(self,
-                 camera_index: int = 0,#1,
+                 camera_index: int = 1,
                  cap_show: int = cv2.CAP_DSHOW,
                  window_name: str = 'Webcam Feed',
                  load_from_file: str = None):
@@ -35,7 +35,7 @@ class WebcamFeed:
 
         # to test with image, remove these lines until...
 
-        self.cap = None if load_from_file else cv2.VideoCapture(self.camera_index, self.cap_show)
+        self.cap = None if load_from_file is not None else cv2.VideoCapture(self.camera_index, self.cap_show)
 
         if self.cap is not None and not self.cap.isOpened():
             raise ValueError("Error: Could not open webcam.")

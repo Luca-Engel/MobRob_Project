@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="Thymio's movement leaves the map at previous location as it was before driving over it">
+    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="enable loading from stored images&#10;&#10;when instantiating GridMap, either specify load_from_files attribute to the name of the image to load (loads from that image) or leave it as None (then webcam is used)&#10;image must be in the 'map' package">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/aruco/top_image.png" beforeDir="false" afterPath="$PROJECT_DIR$/map/top_image.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/map/GridMap.py" beforeDir="false" afterPath="$PROJECT_DIR$/map/GridMap.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/opencv/webcam_input.py" beforeDir="false" afterPath="$PROJECT_DIR$/opencv/webcam_input.py" afterDir="false" />
     </list>
@@ -75,6 +76,7 @@
       <recent name="C:\Users\LucaS\OneDrive - epfl.ch\EPFL\MA1\Mob_Robotics\MobRob_Project\aruco\markers" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\LucaS\OneDrive - epfl.ch\EPFL\MA1\Mob_Robotics\MobRob_Project\map" />
       <recent name="C:\Users\LucaS\OneDrive - epfl.ch\EPFL\MA1\Mob_Robotics\MobRob_Project\aruco" />
     </key>
   </component>
@@ -199,7 +201,7 @@
       <workItem from="1700495641895" duration="9000" />
       <workItem from="1700510460652" duration="14973000" />
       <workItem from="1700570820350" duration="7365000" />
-      <workItem from="1700580097049" duration="13092000" />
+      <workItem from="1700580097049" duration="13649000" />
     </task>
     <task id="LOCAL-00001" summary="initialize aruco package">
       <created>1700221808513</created>
@@ -400,7 +402,15 @@
       <option name="project" value="LOCAL" />
       <updated>1700665444605</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="enable loading from stored images&#10;&#10;when instantiating GridMap, either specify load_from_files attribute to the name of the image to load (loads from that image) or leave it as None (then webcam is used)&#10;image must be in the 'map' package">
+      <option name="closed" value="true" />
+      <created>1700666872862</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1700666872862</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -431,7 +441,8 @@
     <MESSAGE value="adapt how grid is calculated and displayed" />
     <MESSAGE value="enable marker's object detection to be disabled&#10;&#10;markers object detection is overwritten by CellType.MARKER in the grid" />
     <MESSAGE value="Thymio's movement leaves the map at previous location as it was before driving over it" />
-    <option name="LAST_COMMIT_MESSAGE" value="Thymio's movement leaves the map at previous location as it was before driving over it" />
+    <MESSAGE value="enable loading from stored images&#10;&#10;when instantiating GridMap, either specify load_from_files attribute to the name of the image to load (loads from that image) or leave it as None (then webcam is used)&#10;image must be in the 'map' package" />
+    <option name="LAST_COMMIT_MESSAGE" value="enable loading from stored images&#10;&#10;when instantiating GridMap, either specify load_from_files attribute to the name of the image to load (loads from that image) or leave it as None (then webcam is used)&#10;image must be in the 'map' package" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -447,7 +458,7 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/MobRob_Project$marker_recognition.coverage" NAME="marker_recognition Coverage Results" MODIFIED="1700578551708" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aruco" />
     <SUITE FILE_PATH="coverage/MobRob_Project$webcam_input.coverage" NAME="webcam_input Coverage Results" MODIFIED="1700316012983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
-    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700665404279" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
+    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700667067864" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
     <SUITE FILE_PATH="coverage/MobRob_Project$object_recognition.coverage" NAME="object_recognition Coverage Results" MODIFIED="1700663998647" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
   </component>
 </project>
