@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import enum
+from matplotlib import pyplot as plt
 
 from opencv.webcam_input import WebcamFeed
 from aruco.marker_recognition import ArUcoMarkerDetector
@@ -53,28 +54,59 @@ class GridMap:
         self._compute_grid_image()
         self.grid_image_is_up_to_date = True
 
-    def _compute_grid_image(self):
+    def _compute_grid_image(self, scale_factor=5):
 
         self.grid_image = np.vectorize(lambda x: self.color_mapping.get(x, (0, 0, 0)))(self.grid)
         self.grid_image = np.stack(self.grid_image, axis=-1)
+
+        height, width = self.grid_image.shape[:2]
+
+        # Create a new image with double the dimensions
+        resized_image = np.zeros((scale_factor * height, scale_factor * width, 3), dtype=np.uint8)
+
+        # Copy each pixel value to the corresponding 2x2 block in the new image
+        for i in range(height):
+            for j in range(width):
+                resized_image[scale_factor * i:scale_factor * (i + 1), scale_factor * j:scale_factor * (j + 1), :] = self.grid_image[i, j, :]
+        self.grid_image = np.array(resized_image)
         # Convert to uint8 for imshow
         self.grid_image = self.grid_image.astype(np.uint8)
 
     def update_grid(self):
+        # TODO: automatically check if a found object is a marker or not (if yes, count it as Free)
+        #       Idea 1: know width of markers and overlay image with white at that place
+        #       Idea 2: check here if the object is at a marker position or not (i.e., one of the corners or ath thymios location)
+
         contours, binary_image, frame_with_objects, corners, ids = self.object_detector.detect_objects()
+
+        marker_width = 0
+        if corners is not None and len(corners) > 0:
+            marker_width = corners[0][0][1][0] - corners[0][0][0][0]
+
 
         image_height = len(binary_image)
         image_width = len(binary_image[0])
 
         for row_pixel in range(image_height):
             for column_pixel in range(image_width):
-                if binary_image[row_pixel][column_pixel] < 100:  # no object
+                if binary_image[row_pixel][column_pixel] < 100: # no object
                     self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.FREE)
                 else:  # object
                     self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.OBJECT)
 
+        self._remove_markers_as_objects_from_grid(binary_image, corners, ids, marker_width)
+
         self._update_thymio_grid_location(binary_image, corners, ids)
         self._update_goal_grid_location(binary_image, corners, ids)
+
+    def _remove_markers_as_objects_from_grid(self, binary_image, corners, ids, marker_width):
+        if ids is not None:
+            for c in corners:
+                corner = c[0]
+
+
+                self.grid_image_is_up_to_date = False
+
 
     def update_goal_and_thymio_grid_location(self):
         contours, binary_image, frame_with_objects, corners, ids = self.object_detector.detect_objects()
@@ -107,7 +139,7 @@ class GridMap:
     def _update_grid_with_marker(self, corner, value, video_feed_width, video_feed_height, last_location=None):
         marker_corners = corner[0]
         # find centroid of the corners in grid coordinates
-        x, y = self._convert_to_grid_indices(marker_corners, video_feed_width, video_feed_height)
+        x, y = self._convert_to_centroid_grid_indices(marker_corners, video_feed_width, video_feed_height)
         if value == CellType.GOAL:
             self.goal_location = (x, y)
         elif value == CellType.THYMIO:
@@ -119,14 +151,16 @@ class GridMap:
 
     def _draw_marker_circle(self, value, x, y):
         # Update grid with value in a 20x20 square around the marker
-        for i in range(x - 10, x + 10):
-            for j in range(y - 10, y + 10):
-                if 0 <= i < self.width and 0 <= j < self.height:
-                    # draw circle in grid
-                    if (i - x) ** 2 + (j - y) ** 2 <= 10 ** 2:
-                        self.grid[j, i] = value
+        # for i in range(x - 10, x + 10):
+        #     for j in range(y - 10, y + 10):
+        #         if 0 <= i < self.width and 0 <= j < self.height:
+        #             # draw circle in grid
+        #             if (i - x) ** 2 + (j - y) ** 2 <= 10 ** 2:
+        #                 self.grid[j, i] = value
+        self.grid[y, x] = value
 
-    def _convert_to_grid_indices(self, corners, video_feed_width, video_feed_height):
+
+    def _convert_to_centroid_grid_indices(self, corners, video_feed_width, video_feed_height):
         centroid = np.mean(corners, axis=0)
 
         # Convert corner coordinates to grid indices
@@ -193,7 +227,9 @@ class GridMap:
 
 if __name__ == "__main__":
     # Sample usage:
-    width, height = 320, 240
+    # width, height = 320, 240
+    # should be multiples of 4 and 3 respectively
+    width, height = 160, 120
     thymio_marker_id = 4
     goal_marker_id = 5
 
