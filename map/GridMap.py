@@ -29,6 +29,7 @@ class GridMap:
         self.thymio_corners = None
         self.goal_corners = None
         self.thymio_location = None
+        self.thymio_location_prev_grid_value = None
         self.goal_location = None
         self.grid_image_is_up_to_date = False
 
@@ -67,7 +68,8 @@ class GridMap:
         # Copy each pixel value to the corresponding 2x2 block in the new image
         for i in range(height):
             for j in range(width):
-                resized_image[scale_factor * i:scale_factor * (i + 1), scale_factor * j:scale_factor * (j + 1), :] = self.grid_image[i, j, :]
+                resized_image[scale_factor * i:scale_factor * (i + 1), scale_factor * j:scale_factor * (j + 1),
+                :] = self.grid_image[i, j, :]
         self.grid_image = np.array(resized_image)
         # Convert to uint8 for imshow
         self.grid_image = self.grid_image.astype(np.uint8)
@@ -83,13 +85,12 @@ class GridMap:
         if corners is not None and len(corners) > 0:
             marker_width = corners[0][0][1][0] - corners[0][0][0][0]
 
-
         image_height = len(binary_image)
         image_width = len(binary_image[0])
 
         for row_pixel in range(image_height):
             for column_pixel in range(image_width):
-                if binary_image[row_pixel][column_pixel] < 100: # no object
+                if binary_image[row_pixel][column_pixel] < 100:  # no object
                     self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.FREE)
                 else:  # object
                     self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.OBJECT)
@@ -113,10 +114,11 @@ class GridMap:
                 # Iterate through every pixel in the bounding box
                 for x_image in range(min_x, max_x + 1):
                     for y_image in range(min_y, max_y + 1):
-                        self._update_grid_with_object(y_image, x_image, len(binary_image[0]), len(binary_image), CellType.MARKER)
+                        # TODO: decide whether or not to store the markers location on grid as MARKER or FREE
+                        self._update_grid_with_object(y_image, x_image, len(binary_image[0]), len(binary_image),
+                                                      CellType.FREE)#CellType.MARKER)
 
                 self.grid_image_is_up_to_date = False
-
 
     def update_goal_and_thymio_grid_location(self):
         contours, binary_image, frame_with_objects, corners, ids = self.object_detector.detect_objects()
@@ -129,7 +131,8 @@ class GridMap:
             corners_for_thymio = corners[np.where(ids == self.goal_marker_id)[0]][0]
             if self.goal_corners is not None and self.goal_corners == corners_for_thymio:
                 return
-            self._update_grid_with_marker(corners_for_thymio, CellType.GOAL, len(binary_image[0]), len(binary_image), self.goal_location)
+            self._update_grid_with_marker(corners_for_thymio, CellType.GOAL, len(binary_image[0]), len(binary_image),
+                                          self.goal_location)
             self.grid_image_is_up_to_date = False
 
     def _update_thymio_grid_location(self, binary_image, corners, ids):
@@ -137,7 +140,8 @@ class GridMap:
             corners_for_thymio = corners[np.where(ids == self.thymio_marker_id)[0]][0]
             if self.thymio_corners is not None and self.thyio_corners == corners_for_thymio:
                 return
-            self._update_grid_with_marker(corners_for_thymio, CellType.THYMIO, len(binary_image[0]), len(binary_image), self.thymio_location)
+            self._update_grid_with_marker(corners_for_thymio, CellType.THYMIO, len(binary_image[0]), len(binary_image),
+                                          self.thymio_location)
             self.grid_image_is_up_to_date = False
 
     def _update_grid_with_object(self, row_pixel, column_pixel, image_width, image_height, value):
@@ -150,13 +154,18 @@ class GridMap:
         marker_corners = corner[0]
         # find centroid of the corners in grid coordinates
         x, y = self._convert_to_centroid_grid_indices(marker_corners, video_feed_width, video_feed_height)
+
+        # update the last location of the thymio or goal to the last value / FREE, respectively
+        if last_location is not None:
+            self._draw_marker_circle(self.thymio_location_prev_grid_value if value == CellType.THYMIO else CellType.FREE,
+                                     last_location[0], last_location[1])
+
         if value == CellType.GOAL:
             self.goal_location = (x, y)
         elif value == CellType.THYMIO:
             self.thymio_location = (x, y)
+            self.thymio_location_prev_grid_value = self.grid[y, x]
 
-        if last_location is not None:
-            self._draw_marker_circle(CellType.FREE, last_location[0], last_location[1])
         self._draw_marker_circle(value, x, y)
 
     def _draw_marker_circle(self, value, x, y):
@@ -168,7 +177,6 @@ class GridMap:
         #             if (i - x) ** 2 + (j - y) ** 2 <= 10 ** 2:
         #                 self.grid[j, i] = value
         self.grid[y, x] = value
-
 
     def _convert_to_centroid_grid_indices(self, corners, video_feed_width, video_feed_height):
         centroid = np.mean(corners, axis=0)
