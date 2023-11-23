@@ -47,7 +47,7 @@ class GridMap:
             CellType.OBJECT: (0, 0, 0),  # Black
             CellType.OBJECT_SIZE_INCREASE: (100, 100, 100), # Grey
             CellType.MARKER: (0, 0, 255),  # Red
-            CellType.GOAL: (255, 0, 0)  # Blue
+            CellType.GOAL: (255, 0, 0), # Blue
             CellType.PATH: (0, 255, 255)  # Yellow
         }
 
