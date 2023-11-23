@@ -11,6 +11,7 @@ from opencv.webcam_input import WebcamFeed
 class CellType(enum.Enum):
     FREE = '_'
     OBJECT = 'x'
+    OBJECT_SIZE_INCREASE = 'o'
     MARKER = 'm'
     THYMIO = 't'
     GOAL = 'g'
@@ -37,6 +38,7 @@ class GridMap:
             CellType.FREE: (255, 255, 255),  # White
             CellType.THYMIO: (0, 255, 0),  # Green
             CellType.OBJECT: (0, 0, 0),  # Black
+            CellType.OBJECT_SIZE_INCREASE: (100, 100, 100), # Grey
             CellType.MARKER: (0, 0, 255),  # Red
             CellType.GOAL: (255, 0, 0)  # Blue
         }
@@ -54,8 +56,8 @@ class GridMap:
         self.update_grid()
 
         self._remove_island_objects_from_grid(radius=2)
-
         self._increase_object_size(radius=10)
+        self._remove_island_objects_from_grid(radius=2)
 
 
         self._compute_grid_image()
@@ -75,8 +77,11 @@ class GridMap:
                                 and (l)**2 + (k)**2 <= radius**2
                             ):
                                     # and not (-radius < k < radius and -radius < l < radius)):
-                                new_grid[y+k, x+l] = CellType.OBJECT
+                                new_grid[y+k, x+l] = CellType.OBJECT_SIZE_INCREASE
         self.grid = new_grid
+        self.grid_image_is_up_to_date = False
+        self.update_grid()
+
 
 
 
@@ -147,7 +152,8 @@ class GridMap:
         for row_pixel in range(image_height):
             for column_pixel in range(image_width):
                 if binary_image[row_pixel][column_pixel] < 100:  # no object
-                    self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.FREE)
+                    #self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.FREE)
+                    continue
                 else:  # object
                     self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.OBJECT)
 
