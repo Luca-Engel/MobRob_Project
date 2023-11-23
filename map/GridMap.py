@@ -28,82 +28,81 @@ class CellType(enum.Enum):
 
 
 class GridMap:
+    def __init__(self, width=160, height=120, thymio_marker_id=4, goal_marker_id=5, load_from_file=None):
+        self._width = width
+        self._height = height
+        self._thymio_marker_id = thymio_marker_id
+        self._goal_marker_id = goal_marker_id
+        self._thymio_corners = None
+        self._goal_corners = None
+        self._thymio_location = None
+        self._thymio_location_prev_grid_value = None
+        self._thymio_direction = None
+        self._goal_location = None
+        self.path = None
+        self._grid_image_is_up_to_date = False
 
-    def __init__(self, width, height, thymio_marker_id=0, goal_marker_id=1, load_from_file=None):
-        self.width = width
-        self.height = height
-        self.thymio_marker_id = thymio_marker_id
-        self.goal_marker_id = goal_marker_id
-        self.thymio_corners = None
-        self.goal_corners = None
-        self.thymio_location = None
-        self.thymio_location_prev_grid_value = None
-        self.goal_location = None
-        self.grid_image_is_up_to_date = False
-
-        self.color_mapping = {
+        self._color_mapping = {
             CellType.FREE: (255, 255, 255),  # White
             CellType.THYMIO: (0, 255, 0),  # Green
             CellType.OBJECT: (0, 0, 0),  # Black
-            CellType.OBJECT_SIZE_INCREASE: (100, 100, 100), # Grey
+            CellType.OBJECT_SIZE_INCREASE: (100, 100, 100),  # Grey
             CellType.MARKER: (0, 0, 255),  # Red
-            CellType.GOAL: (255, 0, 0), # Blue
-            CellType.PATH: (0, 255, 255)  # Yellow
+            CellType.GOAL: (255, 0, 0),  # Blue
+            CellType.PATH: (0, 0, 255)  # Yellow
         }
 
-        self.webcam = WebcamFeed(load_from_file=load_from_file)
-        self.aruco_detector = ArUcoMarkerDetector(self.webcam)
-        self.object_detector = ObjectDetector(self.aruco_detector)
+        self._webcam = WebcamFeed(load_from_file=load_from_file)
+        self._aruco_detector = ArUcoMarkerDetector(self._webcam)
+        self._object_detector = ObjectDetector(self._aruco_detector)
+        self._image_feed_width = None
+        self._image_feed_height = None
 
         while True:
             if cv2.waitKey(1) & 0xFF == ord('b'):
                 break
-            cv2.imshow("Press b to initialize Map", self.webcam.single_capture_and_display())
+            cv2.imshow("Press b to initialize Map", self._webcam.single_capture_and_display())
 
-        self.grid = np.full((height, width), CellType.FREE, dtype='object')
-        self.previous_grid = None
+        self._grid = np.full((height, width), CellType.FREE, dtype='object')
+        self._previous_grid = None
         self.update_grid()
 
         self._remove_island_objects_from_grid(radius=ISLAND_REMOVAL_RADIUS)
         self._increase_object_size(radius=THYMIO_HALF_SIZE)
         self._remove_island_objects_from_grid(radius=ISLAND_REMOVAL_RADIUS)
 
-
         self._compute_grid_image()
-        self.grid_image_is_up_to_date = True
+        self._grid_image_is_up_to_date = True
 
+        print("grid shape", self._grid.shape)
 
     def _increase_object_size(self, radius=1):
-        new_grid = self.grid.copy()
+        new_grid = self._grid.copy()
 
-        for y in range(self.height):
-            for x in range(self.width):
-                if self.grid[y,x] == CellType.OBJECT:
-                    for k in range(-radius, radius+1):
-                        for l in range(-radius, radius+1):
-                            if (0 <= y+k < self.height
-                                    and 0 <= x+l < self.width
-                                and (l)**2 + (k)**2 <= radius**2
+        for y in range(self._height):
+            for x in range(self._width):
+                if self._grid[y, x] == CellType.OBJECT:
+                    for k in range(-radius, radius + 1):
+                        for l in range(-radius, radius + 1):
+                            if (0 <= y + k < self._height
+                                    and 0 <= x + l < self._width
+                                    and (l) ** 2 + (k) ** 2 <= radius ** 2
                             ):
-                                    # and not (-radius < k < radius and -radius < l < radius)):
-                                if self.grid[y+k, x+l] != CellType.OBJECT:
-                                    new_grid[y+k, x+l] = CellType.OBJECT_SIZE_INCREASE
-        self.grid = new_grid
-        self.previous_grid = self.grid.copy()
-        self.grid_image_is_up_to_date = False
+                                # and not (-radius < k < radius and -radius < l < radius)):
+                                if self._grid[y + k, x + l] != CellType.OBJECT:
+                                    new_grid[y + k, x + l] = CellType.OBJECT_SIZE_INCREASE
+        self._grid = new_grid
+        self._previous_grid = self._grid.copy()
+        self._grid_image_is_up_to_date = False
         self.update_grid()
 
-
-
-
     def _remove_island_objects_from_grid(self, radius=1):
-        for y in range(self.height):
-            for x in range(self.width):
-                if self.grid[y,x] == CellType.OBJECT:
+        for y in range(self._height):
+            for x in range(self._width):
+                if self._grid[y, x] == CellType.OBJECT:
                     if self._check_if_cells_are_island(x, y, radius):
-                        self.grid[y,x] = CellType.FREE
-        self.grid_image_is_up_to_date = False
-
+                        self._grid[y, x] = CellType.FREE
+        self._grid_image_is_up_to_date = False
 
     def _check_if_cells_are_island(self, x, y, radius):
         """
@@ -113,23 +112,23 @@ class GridMap:
         :param radius: the radius of the island
         :return: True if the cells within the radius form an island, False otherwise
         """
-        if (self.grid[y,x] != CellType.OBJECT):
+        if (self._grid[y, x] != CellType.OBJECT):
             print("error: cell is not an object")
             print("(x, y): ", x, y)
         count = 0
-        for k in range(-radius, radius+1):
-            for l in range(-radius, radius+1):
-                if (0 <= y+k < self.height
-                        and 0 <= x+l < self.width
+        for k in range(-radius, radius + 1):
+            for l in range(-radius, radius + 1):
+                if (0 <= y + k < self._height
+                        and 0 <= x + l < self._width
                         and not (-radius < k < radius and -radius < l < radius)):
-                    if self.grid[y+k, x+l] == CellType.OBJECT:
+                    if self._grid[y + k, x + l] == CellType.OBJECT:
                         count += 1
-        return count < 2 # i.e., no neighbours of the island within the radius are objects -> island
-
+        return count < 2  # i.e., no neighbours of the island within the radius are objects -> island
 
     def _compute_grid_image(self, scale_factor=5):
+        print("computing grid image")
 
-        self.grid_image = np.vectorize(lambda x: self.color_mapping.get(x, (0, 0, 0)))(self.grid)
+        self.grid_image = np.array(np.vectorize(lambda x: self._color_mapping.get(x, (0, 0, 0)))(self._grid))
         self.grid_image = np.stack(self.grid_image, axis=-1)
 
         height, width = self.grid_image.shape[:2]
@@ -151,7 +150,7 @@ class GridMap:
         #       Idea 1: know width of markers and overlay image with white at that place
         #       Idea 2: check here if the object is at a marker position or not (i.e., one of the corners or ath thymios location)
 
-        contours, binary_image, frame_with_objects, corners, ids = self.object_detector.detect_objects()
+        contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
 
         marker_width = 0
         if corners is not None and len(corners) > 0:
@@ -159,18 +158,20 @@ class GridMap:
 
         image_height = len(binary_image)
         image_width = len(binary_image[0])
+        self._image_feed_width = image_width
+        self._image_feed_height = image_height
 
         for row_pixel in range(image_height):
             for column_pixel in range(image_width):
                 if binary_image[row_pixel][column_pixel] < 100:  # no object
-                    #self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.FREE)
+                    # self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.FREE)
                     continue
                 else:  # object
                     self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.OBJECT)
 
         self._remove_markers_as_objects_from_grid(binary_image, corners, ids)
 
-        self._update_thymio_grid_location(binary_image, corners, ids)
+        self._update_thymio_grid_location_and_direction(binary_image, corners, ids)
         self._update_goal_grid_location(binary_image, corners, ids)
 
     def _remove_markers_as_objects_from_grid(self, binary_image, corners, ids):
@@ -189,41 +190,44 @@ class GridMap:
                     for y_image in range(min_y, max_y + 1):
                         # TODO: decide whether or not to store the markers location on grid as MARKER or FREE
                         self._update_grid_with_object(y_image, x_image, len(binary_image[0]), len(binary_image),
-                                                      CellType.FREE)#CellType.MARKER)
+                                                      CellType.FREE)  # CellType.MARKER)
 
-                self.grid_image_is_up_to_date = False
+                self._grid_image_is_up_to_date = False
 
     def update_goal_and_thymio_grid_location(self):
-        contours, binary_image, frame_with_objects, corners, ids = self.object_detector.detect_objects()
+        contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
 
-        self._update_thymio_grid_location(binary_image, corners, ids)
+        self._update_thymio_grid_location_and_direction(binary_image, corners, ids)
         self._update_goal_grid_location(binary_image, corners, ids)
 
     def _update_goal_grid_location(self, binary_image, corners, ids):
-        if ids is not None and self.goal_marker_id in ids:
-            corners_for_thymio = corners[np.where(ids == self.goal_marker_id)[0]][0]
-            if self.goal_corners is not None and self.goal_corners == corners_for_thymio:
+        if ids is not None and self._goal_marker_id in ids:
+            corners_for_goal = corners[np.where(ids == self._goal_marker_id)[0]][0]
+            if self._goal_corners is not None and self._goal_corners == corners_for_goal:
                 return
-            self._update_grid_with_marker(corners_for_thymio, CellType.GOAL, len(binary_image[0]), len(binary_image),
-                                          self.goal_location)
-            self.grid_image_is_up_to_date = False
+            self._update_grid_with_marker(corners_for_goal, CellType.GOAL, len(binary_image[0]), len(binary_image),
+                                          self._goal_location)
+            self._grid_image_is_up_to_date = False
 
-    def _update_thymio_grid_location(self, binary_image, corners, ids):
-        if ids is not None and self.thymio_marker_id in ids:
-            corners_for_thymio = corners[np.where(ids == self.thymio_marker_id)[0]][0]
-            if self.thymio_corners is not None and self.thyio_corners == corners_for_thymio:
+    def _update_thymio_grid_location_and_direction(self, binary_image, corners, ids):
+        if ids is not None and self._thymio_marker_id in ids:
+            corners_for_thymio = corners[np.where(ids == self._thymio_marker_id)[0]][0]
+            if (self._thymio_corners is not None) and np.array_equal(self._thymio_corners, corners_for_thymio):
                 return
+
+            self._thymio_corners = corners_for_thymio
+            self._update_thymio_direction()
             self._update_grid_with_marker(corners_for_thymio, CellType.THYMIO, len(binary_image[0]), len(binary_image),
-                                          self.thymio_location)
-            self.grid_image_is_up_to_date = False
+                                          self._thymio_location)
+            self._grid_image_is_up_to_date = False
 
     def _update_grid_with_object(self, row_pixel, column_pixel, image_width, image_height, value):
-        x = int(column_pixel / image_width * self.width)
-        y = int(row_pixel / image_height * self.height)
+        x = int(column_pixel / image_width * self._width)
+        y = int(row_pixel / image_height * self._height)
 
-        if 0 <= x < self.width and 0 <= y < self.height:
+        if 0 <= x < self._width and 0 <= y < self._height:
             # self.grid[y, x] = value
-            self.grid[y, x] = self.previous_grid[y, x] if self.previous_grid is not None else value
+            self._grid[y, x] = self._previous_grid[y, x] if self._previous_grid is not None else value
 
     def _update_grid_with_marker(self, corner, value, video_feed_width, video_feed_height, last_location=None):
         marker_corners = corner[0]
@@ -232,15 +236,16 @@ class GridMap:
 
         # update the last location of the thymio or goal to the last value / FREE, respectively
         if last_location is not None:
-            self._draw_marker_circle(self.thymio_location_prev_grid_value if value == CellType.THYMIO else CellType.FREE,
-                                     last_location[0], last_location[1])
+            self._draw_marker_circle(
+                self._thymio_location_prev_grid_value if value == CellType.THYMIO else CellType.FREE,
+                last_location[0], last_location[1])
 
         if value == CellType.GOAL:
-            self.goal_location = (x, y)
+            self._goal_location = (x, y)
         elif value == CellType.THYMIO:
-            if 0 <= x < self.width and 0 <= y < self.height:
-                self.thymio_location = (x, y)
-                self.thymio_location_prev_grid_value = self.grid[y, x]
+            if 0 <= x < self._width and 0 <= y < self._height:
+                self._thymio_location = (x, y)
+                self._thymio_location_prev_grid_value = self._grid[y, x]
 
         self._draw_marker_circle(value, x, y)
 
@@ -252,15 +257,15 @@ class GridMap:
         #             # draw circle in grid
         #             if (i - x) ** 2 + (j - y) ** 2 <= 10 ** 2:
         #                 self.grid[j, i] = value
-        if 0 <= x < self.width and 0 <= y < self.height:
-            self.grid[y, x] = value
+        if 0 <= x < self._width and 0 <= y < self._height:
+            self._grid[y, x] = value
 
     def _convert_to_centroid_grid_indices(self, corners, video_feed_width, video_feed_height):
         centroid = np.mean(corners, axis=0)
 
         # Convert corner coordinates to grid indices
-        x = int(centroid[0] / video_feed_width * self.width)
-        y = int(centroid[1] / video_feed_height * self.height)
+        x = int(centroid[0] / video_feed_width * self._width)
+        y = int(centroid[1] / video_feed_height * self._height)
         return x, y
 
     def display_grid_as_image(self):
@@ -268,19 +273,40 @@ class GridMap:
         Displays the current grid as an image
         :return: None
         """
-        if self.grid_image_is_up_to_date:
+        if self._grid_image_is_up_to_date:
             cv2.imshow("grid map", self.grid_image)
         else:
+            print("recomputing the grid image")
             self._compute_grid_image()
             cv2.imshow("grid map", self.grid_image)
-            self.grid_image_is_up_to_date = True
+            self._grid_image_is_up_to_date = True
+
+        # thymio_location = self.get_thymio_grid_coordinates()
+        # goal_location = self.get_goal_grid_coordinates()
+        # thymio_location = self.get_thymio_location()
+        # goal_location = self.get_thymio_location()
+        #
+        # new_image=cv2.arrowedLine(self.grid_image, thymio_location, goal_location, (0, 255, 255), 2)
+        # cv2.imshow("image with thymio and goal location", new_image)
+
+    def set_path(self, path):
+        """
+        Sets the path in the grid
+        :param path: list of (x, y) tuples
+        :return: None
+        """
+        for x, y in path:
+            self._grid[y, x] = CellType.PATH
+
+        self.path = path
+        self._grid_image_is_up_to_date = False
 
     def display_feed(self):
         """
         Displays the current webcam feed
         :return:
         """
-        contours, binary_image, frame_with_objects, corners, ids = self.object_detector.detect_objects()
+        contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
 
         cv2.imshow("Current Feed", frame_with_objects)
 
@@ -289,14 +315,14 @@ class GridMap:
         Returns True if the user has quit the program
         :return: bool
         """
-        return self.webcam.user_has_quit()
+        return self._webcam.user_has_quit()
 
     def release_resources(self):
         """
         Releases the resources used by the webcam
         :return: None
         """
-        self.webcam.release_resources()
+        self._webcam.release_resources()
         cv2.destroyAllWindows()
 
     def get_goal_location(self):
@@ -304,21 +330,63 @@ class GridMap:
         Returns the goal location in grid coordinates
         :return: (x, y) tuple
         """
-        if self.goal_location is None:
+        if self._goal_location is None:
             raise Exception("Goal location not found")
 
-        return self.goal_location
+        return self._goal_location
+
 
     def get_thymio_location(self):
         """
         Returns the thymio location in grid coordinates
         :return: (x, y) tuple
         """
-        if self.thymio_location is None:
-            #throw exception:
+        if self._thymio_location is None:
+            # throw exception:
             raise Exception("Thymio location not found")
 
-        return self.thymio_location
+        return self._thymio_location
+
+    def _update_thymio_direction(self):
+        """
+        Updates the thymio direction in grid coordinates
+        :return: None
+        """
+        if self._thymio_corners is None:
+            # throw exception:
+            raise Exception("Thymio location not found")
+
+        direction = self._thymio_corners[0][0] - self._thymio_corners[0][3]
+        normalized_direction = direction / np.linalg.norm(direction)
+        self._thymio_direction = normalized_direction
+
+    def get_thymio_direction(self):
+        """
+        Returns the thymio direction in grid coordinates
+        :return: (x, y) tuple
+        """
+        if self._thymio_corners is None:
+            # throw exception:
+            raise Exception("Thymio location not found")
+
+        if self._thymio_direction is None:
+            self._update_thymio_direction()
+
+        return self._thymio_direction
+
+    def get_grid(self):
+        """
+        Returns the 2d-grid
+        :return: the current grid
+        """
+        return self._grid
+
+    def get_path(self):
+        """
+        Returns the path
+        :return: the current path
+        """
+        return self.path
 
 
 if __name__ == "__main__":
