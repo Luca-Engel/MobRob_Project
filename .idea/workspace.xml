@@ -4,11 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="enable loading from stored images&#10;&#10;when instantiating GridMap, either specify load_from_files attribute to the name of the image to load (loads from that image) or leave it as None (then webcam is used)&#10;image must be in the 'map' package">
+    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="fix bug and add examples for image loading">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/aruco/top_image.png" beforeDir="false" afterPath="$PROJECT_DIR$/map/top_image.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/map/GridMap.py" beforeDir="false" afterPath="$PROJECT_DIR$/map/GridMap.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/opencv/webcam_input.py" beforeDir="false" afterPath="$PROJECT_DIR$/opencv/webcam_input.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/map/corner_image.png" beforeDir="false" afterPath="$PROJECT_DIR$/map/images/corner_image.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/map/side_image.png" beforeDir="false" afterPath="$PROJECT_DIR$/map/images/side_image.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/map/top_image.png" beforeDir="false" afterPath="$PROJECT_DIR$/map/images/top_image.png" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -76,6 +77,7 @@
       <recent name="C:\Users\LucaS\OneDrive - epfl.ch\EPFL\MA1\Mob_Robotics\MobRob_Project\aruco\markers" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\LucaS\OneDrive - epfl.ch\EPFL\MA1\Mob_Robotics\MobRob_Project\map\images" />
       <recent name="C:\Users\LucaS\OneDrive - epfl.ch\EPFL\MA1\Mob_Robotics\MobRob_Project\map" />
       <recent name="C:\Users\LucaS\OneDrive - epfl.ch\EPFL\MA1\Mob_Robotics\MobRob_Project\aruco" />
     </key>
@@ -201,7 +203,8 @@
       <workItem from="1700495641895" duration="9000" />
       <workItem from="1700510460652" duration="14973000" />
       <workItem from="1700570820350" duration="7365000" />
-      <workItem from="1700580097049" duration="13649000" />
+      <workItem from="1700580097049" duration="14456000" />
+      <workItem from="1700672906971" duration="4275000" />
     </task>
     <task id="LOCAL-00001" summary="initialize aruco package">
       <created>1700221808513</created>
@@ -410,14 +413,21 @@
       <option name="project" value="LOCAL" />
       <updated>1700666872862</updated>
     </task>
-    <option name="localTasksCounter" value="27" />
+    <task id="LOCAL-00027" summary="fix bug and add examples for image loading">
+      <option name="closed" value="true" />
+      <created>1700667526294</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1700667526294</updated>
+    </task>
+    <option name="localTasksCounter" value="28" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="initialize aruco package" />
     <MESSAGE value="create camera-feed class" />
     <MESSAGE value="add aruco marker images to project" />
     <MESSAGE value="create .gitignore" />
@@ -442,7 +452,8 @@
     <MESSAGE value="enable marker's object detection to be disabled&#10;&#10;markers object detection is overwritten by CellType.MARKER in the grid" />
     <MESSAGE value="Thymio's movement leaves the map at previous location as it was before driving over it" />
     <MESSAGE value="enable loading from stored images&#10;&#10;when instantiating GridMap, either specify load_from_files attribute to the name of the image to load (loads from that image) or leave it as None (then webcam is used)&#10;image must be in the 'map' package" />
-    <option name="LAST_COMMIT_MESSAGE" value="enable loading from stored images&#10;&#10;when instantiating GridMap, either specify load_from_files attribute to the name of the image to load (loads from that image) or leave it as None (then webcam is used)&#10;image must be in the 'map' package" />
+    <MESSAGE value="fix bug and add examples for image loading" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix bug and add examples for image loading" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -458,7 +469,7 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/MobRob_Project$marker_recognition.coverage" NAME="marker_recognition Coverage Results" MODIFIED="1700578551708" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aruco" />
     <SUITE FILE_PATH="coverage/MobRob_Project$webcam_input.coverage" NAME="webcam_input Coverage Results" MODIFIED="1700316012983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
-    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700667067864" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
+    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700727630549" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
     <SUITE FILE_PATH="coverage/MobRob_Project$object_recognition.coverage" NAME="object_recognition Coverage Results" MODIFIED="1700663998647" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
   </component>
 </project>

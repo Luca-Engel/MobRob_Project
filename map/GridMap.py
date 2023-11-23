@@ -1,11 +1,11 @@
+import enum
+
 import cv2
 import numpy as np
-import enum
-from matplotlib import pyplot as plt
 
-from opencv.webcam_input import WebcamFeed
 from aruco.marker_recognition import ArUcoMarkerDetector
 from opencv.object_recognition import ObjectDetector
+from opencv.webcam_input import WebcamFeed
 
 
 class CellType(enum.Enum):
@@ -52,8 +52,44 @@ class GridMap:
 
         self.grid = np.full((height, width), CellType.FREE, dtype='object')
         self.update_grid()
+
+        self._remove_single_cell_objects_from_grid(radius=1)
+
+
         self._compute_grid_image()
         self.grid_image_is_up_to_date = True
+
+
+    def _remove_single_cell_objects_from_grid(self, radius=1):
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.grid[y,x] == CellType.OBJECT:
+                    if self._check_if_cells_are_island(x, y, radius):
+                        self.grid[y,x] = CellType.FREE
+        self.grid_image_is_up_to_date = False
+
+
+    def _check_if_cells_are_island(self, x, y, radius):
+        """
+        Checks if the cells around the given cell island of size radius is an island
+        :param x: the x coordinate of the cell
+        :param y: the y coordinate of the cell
+        :param radius: the radius of the island
+        :return: True if the cells within the radius form an island, False otherwise
+        """
+        if (self.grid[y,x] != CellType.OBJECT):
+            print("error: cell is not an object")
+            print("(x, y): ", x, y)
+        count = 0
+        for k in range(-radius, radius+1):
+            for l in range(-radius, radius+1):
+                if (0 <= y+k < self.height
+                        and 0 <= x+l < self.width
+                        and not (-radius < k < radius and -radius < l < radius)):
+                    if self.grid[y+k, x+l] == CellType.OBJECT:
+                        count += 1
+        return count == 0 # i.e., no neighbours of the island within the radius are objects -> island
+
 
     def _compute_grid_image(self, scale_factor=5):
 
@@ -229,7 +265,7 @@ class GridMap:
         :return: (x, y) tuple
         """
         if self.goal_location is None:
-            throw("Goal location not found")
+            raise Exception("Goal location not found")
 
         return self.goal_location
 
@@ -239,7 +275,8 @@ class GridMap:
         :return: (x, y) tuple
         """
         if self.thymio_location is None:
-            throw("Thymio location not found")
+            #throw exception:
+            raise Exception("Thymio location not found")
 
         return self.thymio_location
 
@@ -256,9 +293,7 @@ if __name__ == "__main__":
     # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file=None)
 
     # load image from file
-    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='side_image.png')
-    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='top_image.png')
-    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='corner_image.png')
+    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='images/a1_side_image.png')
 
     while True:
         # TODO: Add code to update grid map and delete set the last location of the thymio and goal to FREE
