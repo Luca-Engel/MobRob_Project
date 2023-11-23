@@ -53,11 +53,12 @@ class GridMap:
             cv2.imshow("Press b to initialize Map", self.webcam.single_capture_and_display())
 
         self.grid = np.full((height, width), CellType.FREE, dtype='object')
+        self.previous_grid = None
         self.update_grid()
 
-        self._remove_island_objects_from_grid(radius=2)
+        self._remove_island_objects_from_grid(radius=3)
         self._increase_object_size(radius=10)
-        self._remove_island_objects_from_grid(radius=2)
+        self._remove_island_objects_from_grid(radius=3)
 
 
         self._compute_grid_image()
@@ -65,7 +66,7 @@ class GridMap:
 
 
     def _increase_object_size(self, radius=1):
-        new_grid = np.full((self.height, self.width), CellType.FREE, dtype='object')
+        new_grid = self.grid.copy()
 
         for y in range(self.height):
             for x in range(self.width):
@@ -77,8 +78,10 @@ class GridMap:
                                 and (l)**2 + (k)**2 <= radius**2
                             ):
                                     # and not (-radius < k < radius and -radius < l < radius)):
-                                new_grid[y+k, x+l] = CellType.OBJECT_SIZE_INCREASE
+                                if self.grid[y+k, x+l] != CellType.OBJECT:
+                                    new_grid[y+k, x+l] = CellType.OBJECT_SIZE_INCREASE
         self.grid = new_grid
+        self.previous_grid = self.grid.copy()
         self.grid_image_is_up_to_date = False
         self.update_grid()
 
@@ -113,7 +116,7 @@ class GridMap:
                         and not (-radius < k < radius and -radius < l < radius)):
                     if self.grid[y+k, x+l] == CellType.OBJECT:
                         count += 1
-        return count == 0 # i.e., no neighbours of the island within the radius are objects -> island
+        return count < 2 # i.e., no neighbours of the island within the radius are objects -> island
 
 
     def _compute_grid_image(self, scale_factor=5):
@@ -157,12 +160,12 @@ class GridMap:
                 else:  # object
                     self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.OBJECT)
 
-        self._remove_markers_as_objects_from_grid(binary_image, corners, ids, marker_width)
+        self._remove_markers_as_objects_from_grid(binary_image, corners, ids)
 
         self._update_thymio_grid_location(binary_image, corners, ids)
         self._update_goal_grid_location(binary_image, corners, ids)
 
-    def _remove_markers_as_objects_from_grid(self, binary_image, corners, ids, marker_width):
+    def _remove_markers_as_objects_from_grid(self, binary_image, corners, ids):
         if ids is not None:
             for c in corners:
                 corner = c[0]
@@ -211,7 +214,8 @@ class GridMap:
         y = int(row_pixel / image_height * self.height)
 
         if 0 <= x < self.width and 0 <= y < self.height:
-            self.grid[y, x] = value
+            # self.grid[y, x] = value
+            self.grid[y, x] = self.previous_grid[y, x] if self.previous_grid is not None else value
 
     def _update_grid_with_marker(self, corner, value, video_feed_width, video_feed_height, last_location=None):
         marker_corners = corner[0]
@@ -318,10 +322,10 @@ if __name__ == "__main__":
     goal_marker_id = 5
 
     # load image from the webcam
-    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file=None)
+    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file=None)
 
     # load image from file
-    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='images/a1_side_image.png')
+    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='images/a1_side_image.png')
 
     while True:
         # TODO: Add code to update grid map and delete set the last location of the thymio and goal to FREE

@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="object size is increased by thymios width / 2 &#10;&#10;--&gt; in grid, all positions that are free can be accessed with thymio without touching objects">
+    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="add enum case CellType.OBJECT_SIZE_INCREASE&#10;&#10;increased object size displayed with different color in map">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/map/GridMap.py" beforeDir="false" afterPath="$PROJECT_DIR$/map/GridMap.py" afterDir="false" />
     </list>
@@ -201,7 +201,7 @@
       <workItem from="1700510460652" duration="14973000" />
       <workItem from="1700570820350" duration="7365000" />
       <workItem from="1700580097049" duration="14456000" />
-      <workItem from="1700672906971" duration="7857000" />
+      <workItem from="1700672906971" duration="8728000" />
     </task>
     <task id="LOCAL-00001" summary="initialize aruco package">
       <created>1700221808513</created>
@@ -450,14 +450,21 @@
       <option name="project" value="LOCAL" />
       <updated>1700730971398</updated>
     </task>
-    <option name="localTasksCounter" value="32" />
+    <task id="LOCAL-00032" summary="add enum case CellType.OBJECT_SIZE_INCREASE&#10;&#10;increased object size displayed with different color in map">
+      <option name="closed" value="true" />
+      <created>1700731502746</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1700731502746</updated>
+    </task>
+    <option name="localTasksCounter" value="33" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="black object detection works (but also detects aruco markers at the moment" />
     <MESSAGE value="conversion of image with obstacles to grid with cells works" />
     <MESSAGE value="add thymio and goal cell types" />
     <MESSAGE value="grid map only evaluated once (at instantiation)" />
@@ -482,7 +489,8 @@
     <MESSAGE value="exclude word file from git" />
     <MESSAGE value="compute transformation matrix only once at beginning" />
     <MESSAGE value="object size is increased by thymios width / 2 &#10;&#10;--&gt; in grid, all positions that are free can be accessed with thymio without touching objects" />
-    <option name="LAST_COMMIT_MESSAGE" value="object size is increased by thymios width / 2 &#10;&#10;--&gt; in grid, all positions that are free can be accessed with thymio without touching objects" />
+    <MESSAGE value="add enum case CellType.OBJECT_SIZE_INCREASE&#10;&#10;increased object size displayed with different color in map" />
+    <option name="LAST_COMMIT_MESSAGE" value="add enum case CellType.OBJECT_SIZE_INCREASE&#10;&#10;increased object size displayed with different color in map" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -498,7 +506,7 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/MobRob_Project$marker_recognition.coverage" NAME="marker_recognition Coverage Results" MODIFIED="1700578551708" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aruco" />
     <SUITE FILE_PATH="coverage/MobRob_Project$webcam_input.coverage" NAME="webcam_input Coverage Results" MODIFIED="1700316012983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
-    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700731324173" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
+    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700732191974" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
     <SUITE FILE_PATH="coverage/MobRob_Project$object_recognition.coverage" NAME="object_recognition Coverage Results" MODIFIED="1700663998647" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
   </component>
 </project>
