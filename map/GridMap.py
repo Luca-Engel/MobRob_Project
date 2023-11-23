@@ -7,6 +7,12 @@ from aruco.marker_recognition import ArUcoMarkerDetector
 from opencv.object_recognition import ObjectDetector
 from opencv.webcam_input import WebcamFeed
 
+# Width/2 of the thymio in grid cells
+THYMIO_HALF_SIZE = 12
+
+# Any island with a radius of 2 cells or less will be removed
+ISLAND_REMOVAL_RADIUS = 2
+
 
 class CellType(enum.Enum):
     FREE = '_'
@@ -56,9 +62,9 @@ class GridMap:
         self.previous_grid = None
         self.update_grid()
 
-        self._remove_island_objects_from_grid(radius=3)
-        self._increase_object_size(radius=10)
-        self._remove_island_objects_from_grid(radius=3)
+        self._remove_island_objects_from_grid(radius=ISLAND_REMOVAL_RADIUS)
+        self._increase_object_size(radius=THYMIO_HALF_SIZE)
+        self._remove_island_objects_from_grid(radius=ISLAND_REMOVAL_RADIUS)
 
 
         self._compute_grid_image()
