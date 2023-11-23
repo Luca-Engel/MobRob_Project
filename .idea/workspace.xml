@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="exclude word file from git">
+    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="compute transformation matrix only once at beginning">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/aruco/marker_recognition.py" beforeDir="false" afterPath="$PROJECT_DIR$/aruco/marker_recognition.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/map/GridMap.py" beforeDir="false" afterPath="$PROJECT_DIR$/map/GridMap.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -202,7 +201,7 @@
       <workItem from="1700510460652" duration="14973000" />
       <workItem from="1700570820350" duration="7365000" />
       <workItem from="1700580097049" duration="14456000" />
-      <workItem from="1700672906971" duration="5347000" />
+      <workItem from="1700672906971" duration="7164000" />
     </task>
     <task id="LOCAL-00001" summary="initialize aruco package">
       <created>1700221808513</created>
@@ -435,14 +434,21 @@
       <option name="project" value="LOCAL" />
       <updated>1700727882646</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="compute transformation matrix only once at beginning">
+      <option name="closed" value="true" />
+      <created>1700728890915</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1700728890915</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="marker detection on 4x4 markers works" />
     <MESSAGE value="implement direction extraction" />
     <MESSAGE value="black object detection works (but also detects aruco markers at the moment" />
     <MESSAGE value="conversion of image with obstacles to grid with cells works" />
@@ -467,7 +473,8 @@
     <MESSAGE value="add image of a1 size to project" />
     <MESSAGE value="remove noise obstacles when initializing app and add a1_paper size image" />
     <MESSAGE value="exclude word file from git" />
-    <option name="LAST_COMMIT_MESSAGE" value="exclude word file from git" />
+    <MESSAGE value="compute transformation matrix only once at beginning" />
+    <option name="LAST_COMMIT_MESSAGE" value="compute transformation matrix only once at beginning" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -483,7 +490,7 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/MobRob_Project$marker_recognition.coverage" NAME="marker_recognition Coverage Results" MODIFIED="1700578551708" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aruco" />
     <SUITE FILE_PATH="coverage/MobRob_Project$webcam_input.coverage" NAME="webcam_input Coverage Results" MODIFIED="1700316012983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
-    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700728759442" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
+    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700730630075" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
     <SUITE FILE_PATH="coverage/MobRob_Project$object_recognition.coverage" NAME="object_recognition Coverage Results" MODIFIED="1700663998647" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
   </component>
 </project>

@@ -53,14 +53,34 @@ class GridMap:
         self.grid = np.full((height, width), CellType.FREE, dtype='object')
         self.update_grid()
 
-        self._remove_single_cell_objects_from_grid(radius=1)
+        self._remove_island_objects_from_grid(radius=2)
+
+        self._increase_object_size(radius=10)
 
 
         self._compute_grid_image()
         self.grid_image_is_up_to_date = True
 
 
-    def _remove_single_cell_objects_from_grid(self, radius=1):
+    def _increase_object_size(self, radius=1):
+        new_grid = np.full((self.height, self.width), CellType.FREE, dtype='object')
+
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.grid[y,x] == CellType.OBJECT:
+                    for k in range(-radius, radius+1):
+                        for l in range(-radius, radius+1):
+                            if (0 <= y+k < self.height
+                                    and 0 <= x+l < self.width
+                                and (l)**2 + (k)**2 <= radius**2
+                            ):
+                                    # and not (-radius < k < radius and -radius < l < radius)):
+                                new_grid[y+k, x+l] = CellType.OBJECT
+        self.grid = new_grid
+
+
+
+    def _remove_island_objects_from_grid(self, radius=1):
         for y in range(self.height):
             for x in range(self.width):
                 if self.grid[y,x] == CellType.OBJECT:
@@ -287,14 +307,15 @@ if __name__ == "__main__":
     # width, height = 320, 240
     # should be multiples of 4 and 3 respectively
     width, height = 160, 120
+    # width, height = 140, 105
     thymio_marker_id = 4
     goal_marker_id = 5
 
     # load image from the webcam
-    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file=None)
+    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file=None)
 
     # load image from file
-    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='images/a1_side_image.png')
+    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='images/a1_side_image.png')
 
     while True:
         # TODO: Add code to update grid map and delete set the last location of the thymio and goal to FREE
