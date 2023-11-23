@@ -20,27 +20,47 @@ class DijkstraNavigation:
         # self.goal = self.map.get_goal_grid_coordinates()
         self.start = self.map.get_thymio_location()
         self.goal = self.map.get_goal_location()
+        self.is_path_up_to_date = False
 
     def check_for_recomputation(self):
+        """
+        Checks if the path needs to be recomputed (i.e., if the start or goal has changed a lot compared to before)
+        :return: True if the path needs to be recomputed, False otherwise
+        """
         # TODO: check if the start or goal has changed a lot compared to before
         #       if so, recompute the path
         pass
 
-    def get_needed_direction(self):
+    def get_path_direction(self):
+        """
+        Returns the direction the path intends for the Thymio to go
+        :return: The direction the path intends for the Thymio to go
+        """
         # TODO: based on the current location of the thymio and the path, determine the direction it needs to go to
         #       return the direction
         #       Maybe keep track of which parts on the path have been visited already?
-        current_thymio_direction = self.map.get_thymio_direction()
-        current_thymio_location = self.map.get_thymio_location()
+        thymio_location = self.map.get_thymio_location()
+        thymio_direction = self.map.get_thymio_direction()
         path = self.map.get_path()
 
+    def get_thymio_direction(self):
+        """
+        Returns the direction the Thymio is facing
+        :return: The direction the Thymio is facing
+        """
+        return self.map.get_thymio_direction()
+
     def compute_dijkstra_path(self):
+        """
+        Computes the shortest path from the start to the goal using Dijkstra's algorithm
+        :return: The shortest path from the start to the goal
+        """
         grid = self.map.get_grid()
         start = self.start
         goal = self.goal
 
         rows, cols = grid.shape
-        distances = np.full((rows, cols), -1) # Initialize distances with infinity
+        distances = np.full((rows, cols), -1)  # Initialize distances with infinity
         predecessors = -1 * np.ones((rows, cols, 2), dtype=int)  # Initialize predecessors with -1
         visited = np.zeros((rows, cols), dtype=bool)
 
@@ -90,16 +110,35 @@ class DijkstraNavigation:
         path.reverse()  # Reverse the path to start from the beginning
         self.path = path
         self.map.set_path(path)
+        self.is_path_up_to_date = True
 
-        # self.map.set_path([self.start, self.goal])
+        return path
+
+    def update_start_location(self, start):
+        """
+        Updates the start location
+        :param start: The new start location
+        :return: None
+        """
+        self.start = start
+        self.is_path_up_to_date = False
+
+    def update_goal_location(self, goal):
+        """
+        Updates the goal location
+        :param goal: The new goal location
+        :return: None
+        """
+        self.goal = goal
+        self.is_path_up_to_date = False
 
 
 if __name__ == "__main__":
     dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_image.png')
 
-    dijkstra.compute_dijkstra_path()
+    path = dijkstra.compute_dijkstra_path()
 
-    print(dijkstra.path)
+    print(path)
 
     while True:
         dijkstra.map.display_grid_as_image()

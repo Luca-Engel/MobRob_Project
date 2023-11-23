@@ -74,9 +74,13 @@ class GridMap:
         self._compute_grid_image()
         self._grid_image_is_up_to_date = True
 
-        print("grid shape", self._grid.shape)
 
     def _increase_object_size(self, radius=1):
+        """
+        Increases the size of the objects in the grid by the given radius (of the thymio)
+        :param radius: the radius of the object
+        :return: None
+        """
         new_grid = self._grid.copy()
 
         for y in range(self._height):
@@ -97,6 +101,11 @@ class GridMap:
         self.update_grid()
 
     def _remove_island_objects_from_grid(self, radius=1):
+        """
+        Removes objects that are islands of max size radius
+        :param radius: the max radius of the island
+        :return: None
+        """
         for y in range(self._height):
             for x in range(self._width):
                 if self._grid[y, x] == CellType.OBJECT:
@@ -126,7 +135,11 @@ class GridMap:
         return count < 2  # i.e., no neighbours of the island within the radius are objects -> island
 
     def _compute_grid_image(self, scale_factor=5):
-        print("computing grid image")
+        """
+        Computes the grid image corresponding to the 2d grid
+        :param scale_factor: the scale factor to increase the size of the displayed grid image
+        :return: None
+        """
 
         self.grid_image = np.array(np.vectorize(lambda x: self._color_mapping.get(x, (0, 0, 0)))(self._grid))
         self.grid_image = np.stack(self.grid_image, axis=-1)
@@ -146,9 +159,12 @@ class GridMap:
         self.grid_image = self.grid_image.astype(np.uint8)
 
     def update_grid(self):
-        # TODO: automatically check if a found object is a marker or not (if yes, count it as Free)
-        #       Idea 1: know width of markers and overlay image with white at that place
-        #       Idea 2: check here if the object is at a marker position or not (i.e., one of the corners or ath thymios location)
+        """
+        Updates the grid with the current webcam feed.
+        Automatically removes the markers from the grid.
+        Places the thymio and goal markers on the grid.
+        :return: None
+        """
 
         contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
 
@@ -175,6 +191,14 @@ class GridMap:
         self._update_goal_grid_location(binary_image, corners, ids)
 
     def _remove_markers_as_objects_from_grid(self, binary_image, corners, ids):
+        """
+        Removes the markers from the grid based on the corner locations of the markers
+        :param binary_image: the binary image
+        :param corners: the corners of the markers
+        :param ids: the ids of the markers
+        :return: None
+        """
+
         if ids is not None:
             for c in corners:
                 corner = c[0]
@@ -195,12 +219,23 @@ class GridMap:
                 self._grid_image_is_up_to_date = False
 
     def update_goal_and_thymio_grid_location(self):
+        """
+        Updates the grid with the current webcam feed.
+        :return: None
+        """
         contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
 
         self._update_thymio_grid_location_and_direction(binary_image, corners, ids)
         self._update_goal_grid_location(binary_image, corners, ids)
 
     def _update_goal_grid_location(self, binary_image, corners, ids):
+        """
+        Updates the goal location in the grid
+        :param binary_image: the binary image
+        :param corners: the corners of the markers
+        :param ids: the ids of the markers
+        :return: None
+        """
         if ids is not None and self._goal_marker_id in ids:
             corners_for_goal = corners[np.where(ids == self._goal_marker_id)[0]][0]
             if self._goal_corners is not None and self._goal_corners == corners_for_goal:
@@ -210,6 +245,13 @@ class GridMap:
             self._grid_image_is_up_to_date = False
 
     def _update_thymio_grid_location_and_direction(self, binary_image, corners, ids):
+        """
+        Updates the thymio location and its facing direction in the grid
+        :param binary_image: the binary image
+        :param corners: the corners of the markers
+        :param ids: the ids of the markers
+        :return: None
+        """
         if ids is not None and self._thymio_marker_id in ids:
             corners_for_thymio = corners[np.where(ids == self._thymio_marker_id)[0]][0]
             if (self._thymio_corners is not None) and np.array_equal(self._thymio_corners, corners_for_thymio):
@@ -222,6 +264,15 @@ class GridMap:
             self._grid_image_is_up_to_date = False
 
     def _update_grid_with_object(self, row_pixel, column_pixel, image_width, image_height, value):
+        """
+        Updates the grid with the given value at the given pixel location
+        :param row_pixel: row pixel location
+        :param column_pixel: column pixel location
+        :param image_width: width of the image
+        :param image_height: height of the image
+        :param value: value to update the grid with
+        :return: None
+        """
         x = int(column_pixel / image_width * self._width)
         y = int(row_pixel / image_height * self._height)
 
@@ -230,6 +281,15 @@ class GridMap:
             self._grid[y, x] = self._previous_grid[y, x] if self._previous_grid is not None else value
 
     def _update_grid_with_marker(self, corner, value, video_feed_width, video_feed_height, last_location=None):
+        """
+        Updates the grid with the given value at the given marker location
+        :param corner: the corners delimiting the marker
+        :param value: the value to update the grid with
+        :param video_feed_width: width of the video feed
+        :param video_feed_height: height of the video feed
+        :param last_location: last location of the thymio if it exists
+        :return: None
+        """
         marker_corners = corner[0]
         # find centroid of the corners in grid coordinates
         x, y = self._convert_to_centroid_grid_indices(marker_corners, video_feed_width, video_feed_height)
@@ -250,6 +310,13 @@ class GridMap:
         self._draw_marker_circle(value, x, y)
 
     def _draw_marker_circle(self, value, x, y):
+        """
+        Draws a circle around the marker in the grid
+        :param value: the value to update the grid with
+        :param x: x grid coordinate of the marker
+        :param y: y grid coordinate of the marker
+        :return: None
+        """
         # Update grid with value in a 20x20 square around the marker
         # for i in range(x - 10, x + 10):
         #     for j in range(y - 10, y + 10):
@@ -261,6 +328,13 @@ class GridMap:
             self._grid[y, x] = value
 
     def _convert_to_centroid_grid_indices(self, corners, video_feed_width, video_feed_height):
+        """
+        Converts the centroid of the given corners to grid indices
+        :param corners: the corners of the marker
+        :param video_feed_width: width of the video feed
+        :param video_feed_height: height of the video feed
+        :return: (x, y) tuple delimiting the centroid in grid coordinates
+        """
         centroid = np.mean(corners, axis=0)
 
         # Convert corner coordinates to grid indices
@@ -304,7 +378,7 @@ class GridMap:
     def display_feed(self):
         """
         Displays the current webcam feed
-        :return:
+        :return: None
         """
         contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
 
