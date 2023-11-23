@@ -236,8 +236,9 @@ class GridMap:
         if value == CellType.GOAL:
             self.goal_location = (x, y)
         elif value == CellType.THYMIO:
-            self.thymio_location = (x, y)
-            self.thymio_location_prev_grid_value = self.grid[y, x]
+            if 0 <= x < self.width and 0 <= y < self.height:
+                self.thymio_location = (x, y)
+                self.thymio_location_prev_grid_value = self.grid[y, x]
 
         self._draw_marker_circle(value, x, y)
 
@@ -249,8 +250,8 @@ class GridMap:
         #             # draw circle in grid
         #             if (i - x) ** 2 + (j - y) ** 2 <= 10 ** 2:
         #                 self.grid[j, i] = value
-
-        self.grid[y, x] = value
+        if 0 <= x < self.width and 0 <= y < self.height:
+            self.grid[y, x] = value
 
     def _convert_to_centroid_grid_indices(self, corners, video_feed_width, video_feed_height):
         centroid = np.mean(corners, axis=0)

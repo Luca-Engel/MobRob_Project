@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="improve island removal checking" />
+    <list default="true" id="9f411a0d-e275-43b0-848d-9e5310dfe35c" name="Changes" comment="refactor">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/map/GridMap.py" beforeDir="false" afterPath="$PROJECT_DIR$/map/GridMap.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -198,7 +201,7 @@
       <workItem from="1700510460652" duration="14973000" />
       <workItem from="1700570820350" duration="7365000" />
       <workItem from="1700580097049" duration="14456000" />
-      <workItem from="1700672906971" duration="9049000" />
+      <workItem from="1700672906971" duration="10294000" />
     </task>
     <task id="LOCAL-00001" summary="initialize aruco package">
       <created>1700221808513</created>
@@ -463,7 +466,15 @@
       <option name="project" value="LOCAL" />
       <updated>1700732511152</updated>
     </task>
-    <option name="localTasksCounter" value="34" />
+    <task id="LOCAL-00034" summary="refactor">
+      <option name="closed" value="true" />
+      <created>1700732858923</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1700732858923</updated>
+    </task>
+    <option name="localTasksCounter" value="35" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -480,7 +491,6 @@
     <MESSAGE value="process frames to place corner markers at the edge" />
     <MESSAGE value="Grid creation using processed image" />
     <MESSAGE value="bugfix: center of thymio and goal correctly computed for the grid" />
-    <MESSAGE value="refactor" />
     <MESSAGE value="add thymio location to GridMap instance" />
     <MESSAGE value="enable thymio and goal location updating" />
     <MESSAGE value="adapt how grid is calculated and displayed" />
@@ -495,10 +505,18 @@
     <MESSAGE value="object size is increased by thymios width / 2 &#10;&#10;--&gt; in grid, all positions that are free can be accessed with thymio without touching objects" />
     <MESSAGE value="add enum case CellType.OBJECT_SIZE_INCREASE&#10;&#10;increased object size displayed with different color in map" />
     <MESSAGE value="improve island removal checking" />
-    <option name="LAST_COMMIT_MESSAGE" value="improve island removal checking" />
+    <MESSAGE value="refactor" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/map/GridMap.py</url>
+          <line>102</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">
@@ -511,7 +529,7 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/MobRob_Project$marker_recognition.coverage" NAME="marker_recognition Coverage Results" MODIFIED="1700578551708" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aruco" />
     <SUITE FILE_PATH="coverage/MobRob_Project$webcam_input.coverage" NAME="webcam_input Coverage Results" MODIFIED="1700316012983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
-    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700732475530" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
+    <SUITE FILE_PATH="coverage/MobRob_Project$GridMap.coverage" NAME="GridMap Coverage Results" MODIFIED="1700733279558" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/map" />
     <SUITE FILE_PATH="coverage/MobRob_Project$object_recognition.coverage" NAME="object_recognition Coverage Results" MODIFIED="1700663998647" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/opencv" />
   </component>
 </project>
