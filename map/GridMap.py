@@ -21,6 +21,7 @@ class CellType(enum.Enum):
     MARKER = 'm'
     THYMIO = 't'
     GOAL = 'g'
+    PATH = 'p'
 
     def __str__(self):
         return self.value
@@ -47,6 +48,7 @@ class GridMap:
             CellType.OBJECT_SIZE_INCREASE: (100, 100, 100), # Grey
             CellType.MARKER: (0, 0, 255),  # Red
             CellType.GOAL: (255, 0, 0)  # Blue
+            CellType.PATH: (0, 255, 255)  # Yellow
         }
 
         self.webcam = WebcamFeed(load_from_file=load_from_file)
@@ -329,10 +331,10 @@ if __name__ == "__main__":
     goal_marker_id = 5
 
     # load image from the webcam
-    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file=None)
+    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file=None)
 
     # load image from file
-    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='images/a1_side_image.png')
+    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='images/a1_side_image.png')
 
     while True:
         # TODO: Add code to update grid map and delete set the last location of the thymio and goal to FREE
