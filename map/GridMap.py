@@ -213,6 +213,7 @@ class GridMap:
         #             # draw circle in grid
         #             if (i - x) ** 2 + (j - y) ** 2 <= 10 ** 2:
         #                 self.grid[j, i] = value
+
         self.grid[y, x] = value
 
     def _convert_to_centroid_grid_indices(self, corners, video_feed_width, video_feed_height):
@@ -290,10 +291,10 @@ if __name__ == "__main__":
     goal_marker_id = 5
 
     # load image from the webcam
-    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file=None)
+    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file=None)
 
     # load image from file
-    grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='images/a1_side_image.png')
+    # grid_map = GridMap(width, height, thymio_marker_id, goal_marker_id, load_from_file='images/a1_side_image.png')
 
     while True:
         # TODO: Add code to update grid map and delete set the last location of the thymio and goal to FREE

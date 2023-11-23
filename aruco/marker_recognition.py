@@ -27,6 +27,7 @@ class ArUcoMarkerDetector:
         self.webcam_feed = webcam
         self.thymio_marker_id = thymio_marker_id
         self.marker_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
+        self.transformation_matrix = None
 
         print("aruco_detector initialized.")
 
@@ -87,6 +88,7 @@ class ArUcoMarkerDetector:
     def process_image_with_aruco_markers(self):
         """
         Process the image by adjusting it based on the detected ArUco markers.
+        The image is transformed to place the markers 0-3 in the corners (top left then clockwise).
         :param frame: The frame to be processed.
         :return: The processed frame.
         """
@@ -112,6 +114,15 @@ class ArUcoMarkerDetector:
             marker_for_corner[marker_id] = marker_corners[marker_id]
 
         processed_frame = frame_markers
+        h, w = frame_markers.shape[:2]
+
+        # Don't recompute the transformation matrix if it has already been computed
+        # as this leads to shaking of the image (pixle-wise adjustments to the image)
+        if self.transformation_matrix is not None:
+            base_frame, corners, processed_frame = self._transform_images(base_frame, corners, frame_markers, h,
+                                                                          processed_frame, w)
+            return processed_frame, corners, ids, frame_markers, ids_to_direction, base_frame
+
         if all(position is not None for position in marker_for_corner.values()):
             # Sort markers by id (transform need them sorted from top left clockwise 0-3)
             sorted_marker_positions = [marker_for_corner[i] for i in range(4)]
@@ -120,16 +131,19 @@ class ArUcoMarkerDetector:
             # new_corners = np.array([top_left, top_right, bottom_right, bottom_left])
 
             # Perspective transformation to adjust the image to have the markers in the corners
-            h, w = frame_markers.shape[:2]
             destination_corners = np.array([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]], dtype=np.float32)
 
-            transformation_matrix = cv2.getPerspectiveTransform(np.float32(new_corners), destination_corners)
-            processed_frame = cv2.warpPerspective(frame_markers, transformation_matrix, (w, h))
-            base_frame = cv2.warpPerspective(base_frame, transformation_matrix, (w, h))
-
-            corners = cv2.perspectiveTransform(corners.reshape(-1, 1, 2), transformation_matrix).reshape(corners.shape)
+            self.transformation_matrix = cv2.getPerspectiveTransform(np.float32(new_corners), destination_corners)
+            base_frame, corners, processed_frame = self._transform_images(base_frame, corners, frame_markers, h,
+                                                                          processed_frame, w)
 
         return processed_frame, corners, ids, frame_markers, ids_to_direction, base_frame
+
+    def _transform_images(self, base_frame, corners, frame_markers, h, processed_frame, w):
+        processed_frame = cv2.warpPerspective(frame_markers, self.transformation_matrix, (w, h))
+        base_frame = cv2.warpPerspective(base_frame, self.transformation_matrix, (w, h))
+        corners = cv2.perspectiveTransform(corners.reshape(-1, 1, 2), self.transformation_matrix).reshape(corners.shape)
+        return base_frame, corners, processed_frame
 
     def get_image_corner_coordinates(self, corners, ids, image_corner_ids=[0, 1, 2, 3]):
         """
