@@ -36,7 +36,6 @@ class DijkstraNavigation:
 
         return self.compute_dijkstra_path()
 
-
     def _has_goal_been_kidnapped(self):
         """
         Checks if the goal has been kidnapped
@@ -51,7 +50,6 @@ class DijkstraNavigation:
             print("Distance goal: ", distance)
         return distance > KIDNAP_MIN_DISTANCE
 
-
     def _has_thymio_been_kidnapped(self):
         """
         Checks if the Thymio has been kidnapped
@@ -62,7 +60,7 @@ class DijkstraNavigation:
 
         distance = np.linalg.norm(last_thymio_location - current_thymio_location)
         self._last_known_thymio_location = current_thymio_location
-        if distance>10:
+        if distance > 10:
             print("Distance thymio: ", distance)
 
         return distance > KIDNAP_MIN_DISTANCE
