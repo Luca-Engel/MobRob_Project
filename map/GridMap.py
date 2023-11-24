@@ -254,8 +254,8 @@ class GridMap:
         """
         if ids is not None and self._thymio_marker_id in ids:
             corners_for_thymio = corners[np.where(ids == self._thymio_marker_id)[0]][0]
-            if (self._thymio_corners is not None) and np.array_equal(self._thymio_corners, corners_for_thymio):
-                return
+            # if (self._thymio_corners is not None) and np.array_equal(self._thymio_corners, corners_for_thymio):
+            #     return
 
             self._thymio_corners = corners_for_thymio
             self._update_thymio_direction()
@@ -301,11 +301,13 @@ class GridMap:
                 last_location[0], last_location[1])
 
         if value == CellType.GOAL:
+            # if the goal has not yet been found or if the goal has moved more than 2 cells, update the goal location
             if (self._goal_location is None
                     or abs(x - self._goal_location[0]) > 2
-                    or abs(y - self._goal_location[1]) > 2
-            ):
+                    or abs(y - self._goal_location[1]) > 2):
                 self._goal_location = (x, y)
+            else:
+                x, y = self._goal_location
         elif value == CellType.THYMIO:
             if 0 <= x < self._width and 0 <= y < self._height:
                 self._thymio_location = (x, y)
@@ -313,7 +315,7 @@ class GridMap:
 
         self._draw_marker_circle(value, x, y)
 
-    def _draw_marker_circle(self, value, x, y):
+    def _draw_marker_circle(self, value, x, y, radius=1):
         """
         Draws a circle around the marker in the grid
         :param value: the value to update the grid with
@@ -321,15 +323,17 @@ class GridMap:
         :param y: y grid coordinate of the marker
         :return: None
         """
+        # radius = 2
+
         # Update grid with value in a 20x20 square around the marker
-        # for i in range(x - 10, x + 10):
-        #     for j in range(y - 10, y + 10):
-        #         if 0 <= i < self.width and 0 <= j < self.height:
-        #             # draw circle in grid
-        #             if (i - x) ** 2 + (j - y) ** 2 <= 10 ** 2:
-        #                 self.grid[j, i] = value
-        if 0 <= x < self._width and 0 <= y < self._height:
-            self._grid[y, x] = value
+        for i in range(x - radius, x + radius):
+            for j in range(y - radius, y + radius):
+                if 0 <= i < self._width and 0 <= j < self._height:
+                    # draw circle in grid
+                    if (i - x) ** 2 + (j - y) ** 2 < radius ** 2:
+                        self._grid[j, i] = value
+        # if 0 <= x < self._width and 0 <= y < self._height:
+        #     self._grid[y, x] = value
 
     def _convert_to_centroid_grid_indices(self, corners, video_feed_width, video_feed_height):
         """
@@ -354,7 +358,6 @@ class GridMap:
         if self._grid_image_is_up_to_date:
             cv2.imshow("grid map", self.grid_image)
         else:
-            print("recomputing the grid image")
             self._compute_grid_image()
             cv2.imshow("grid map", self.grid_image)
             self._grid_image_is_up_to_date = True
