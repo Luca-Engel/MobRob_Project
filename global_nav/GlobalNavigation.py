@@ -68,7 +68,7 @@ class DijkstraNavigation:
         priority_queue = PriorityQueue()
 
         # Starting point
-        distances[start] = 0
+        distances[(start[1], start[0])] = 0
         priority_queue.put((0, start))
 
         while not priority_queue.empty():
@@ -134,14 +134,19 @@ class DijkstraNavigation:
 
 
 if __name__ == "__main__":
-    dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_image.png')
+    # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_image.png')
+    # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_obstacles_cut_out.png')
+    dijkstra = DijkstraNavigation(load_from_file=None)
 
     path = dijkstra.compute_dijkstra_path()
 
     print(path)
 
     while True:
+
+        dijkstra.map.update_goal_and_thymio_grid_location()
         dijkstra.map.display_grid_as_image()
+        dijkstra.map.display_feed()
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

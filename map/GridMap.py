@@ -301,7 +301,11 @@ class GridMap:
                 last_location[0], last_location[1])
 
         if value == CellType.GOAL:
-            self._goal_location = (x, y)
+            if (self._goal_location is None
+                    or abs(x - self._goal_location[0]) > 2
+                    or abs(y - self._goal_location[1]) > 2
+            ):
+                self._goal_location = (x, y)
         elif value == CellType.THYMIO:
             if 0 <= x < self._width and 0 <= y < self._height:
                 self._thymio_location = (x, y)
