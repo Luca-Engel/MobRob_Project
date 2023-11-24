@@ -376,6 +376,12 @@ class GridMap:
         :param path: list of (x, y) tuples
         :return: None
         """
+        # remove the previous path
+        if self.path is not None:
+            for x, y in self.path:
+                self._grid[y, x] = CellType.FREE
+
+
         for x, y in path:
             self._grid[y, x] = CellType.PATH
 

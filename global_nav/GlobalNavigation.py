@@ -1,16 +1,13 @@
 import numpy as np
 import cv2
 
-from aruco.marker_recognition import ArUcoMarkerDetector
-from opencv.object_recognition import ObjectDetector
-from opencv.webcam_input import WebcamFeed
 from map.GridMap import GridMap
 from map.GridMap import CellType
 
 from queue import PriorityQueue
 
+KIDNAP_MIN_DISTANCE = 15
 
-# from scipy.spatial import distance
 
 class DijkstraNavigation:
     def __init__(self, load_from_file=None):
@@ -21,15 +18,55 @@ class DijkstraNavigation:
         self.start = self.map.get_thymio_location()
         self.goal = self.map.get_goal_location()
         self.is_path_up_to_date = False
+        self._last_known_thymio_location = self.map.get_thymio_location()
+        self._last_known_goal_location = self.map.get_goal_location()
 
-    def check_for_recomputation(self):
+    def recompute_if_necessary(self):
         """
         Checks if the path needs to be recomputed (i.e., if the start or goal has changed a lot compared to before)
-        :return: True if the path needs to be recomputed, False otherwise
+        :return: The new path if it was recomputed, None otherwise
         """
+        if not self._has_goal_been_kidnapped() and not self._has_thymio_been_kidnapped():
+            return None
+
+        self.start = self.map.get_thymio_location()
+        self.goal = self.map.get_goal_location()
+        self._last_known_goal_location = self.map.get_goal_location()
+        self._last_known_thymio_location = self.map.get_thymio_location()
+
+        return self.compute_dijkstra_path()
         # TODO: check if the start or goal has changed a lot compared to before
         #       if so, recompute the path
-        pass
+
+    def _has_goal_been_kidnapped(self):
+        """
+        Checks if the goal has been kidnapped
+        :return: True if the goal has been kidnapped, False otherwise
+        """
+        last_goal_location = np.array(self._last_known_goal_location)
+        current_goal_location = np.array(self.map.get_goal_location())
+
+        distance = np.linalg.norm(last_goal_location - current_goal_location)
+
+        if distance > 10:
+            print("Distance goal: ", distance)
+        return distance > KIDNAP_MIN_DISTANCE
+
+
+    def _has_thymio_been_kidnapped(self):
+        """
+        Checks if the Thymio has been kidnapped
+        :return: True if the Thymio has been kidnapped, False otherwise
+        """
+        last_thymio_location = np.array(self._last_known_thymio_location)
+        current_thymio_location = np.array(self.map.get_thymio_location())
+
+        distance = np.linalg.norm(last_thymio_location - current_thymio_location)
+        self._last_known_thymio_location = current_thymio_location
+        if distance>10:
+            print("Distance thymio: ", distance)
+
+        return distance > KIDNAP_MIN_DISTANCE
 
     def get_path_direction(self):
         """
@@ -143,10 +180,11 @@ if __name__ == "__main__":
     print(path)
 
     while True:
-
         dijkstra.map.update_goal_and_thymio_grid_location()
         dijkstra.map.display_grid_as_image()
         dijkstra.map.display_feed()
+
+        dijkstra.recompute_if_necessary()
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
