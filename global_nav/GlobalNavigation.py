@@ -35,8 +35,7 @@ class DijkstraNavigation:
         self._last_known_thymio_location = self.map.get_thymio_location()
 
         return self.compute_dijkstra_path()
-        # TODO: check if the start or goal has changed a lot compared to before
-        #       if so, recompute the path
+
 
     def _has_goal_been_kidnapped(self):
         """
