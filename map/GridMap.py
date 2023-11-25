@@ -22,6 +22,7 @@ class CellType(enum.Enum):
     THYMIO = 't'
     GOAL = 'g'
     PATH = 'p'
+    PATH_DIR_CHANGE = 'd'
 
     def __str__(self):
         return self.value
@@ -40,6 +41,7 @@ class GridMap:
         self._thymio_direction = None
         self._goal_location = None
         self.path = None
+        self.direction_changes = None
         self._grid_image_is_up_to_date = False
 
         self._color_mapping = {
@@ -49,7 +51,8 @@ class GridMap:
             CellType.OBJECT_SIZE_INCREASE: (100, 100, 100),  # Grey
             CellType.MARKER: (0, 0, 255),  # Red
             CellType.GOAL: (255, 0, 0),  # Blue
-            CellType.PATH: (0, 0, 255)  # Yellow
+            CellType.PATH: (0, 0, 255),  # Red
+            CellType.PATH_DIR_CHANGE: (100, 0, 100),  # Purple
         }
 
         self._webcam = WebcamFeed(load_from_file=load_from_file)
@@ -221,12 +224,14 @@ class GridMap:
     def update_goal_and_thymio_grid_location(self):
         """
         Updates the grid with the current webcam feed.
-        :return: None
+        :return: updated (thymio_location, goal_location) tuple
         """
         contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
 
         self._update_thymio_grid_location_and_direction(binary_image, corners, ids)
         self._update_goal_grid_location(binary_image, corners, ids)
+
+        return self._thymio_location, self._goal_location
 
     def _update_goal_grid_location(self, binary_image, corners, ids):
         """
@@ -388,6 +393,22 @@ class GridMap:
         self.path = path
         self._grid_image_is_up_to_date = False
 
+    def set_direction_changes(self, direction_changes):
+        """
+        Sets the direction changes in the grid
+        :param direction_changes: list of (x, y) tuples
+        :return: None
+        """
+        if self.direction_changes is not None:
+            for x, y in self.direction_changes:
+                self._grid[y, x] = CellType.FREE
+
+        for x, y in direction_changes:
+            self._grid[y, x] = CellType.PATH_DIR_CHANGE
+
+        self.direction_changes = direction_changes
+        self._grid_image_is_up_to_date = False
+
     def display_feed(self):
         """
         Displays the current webcam feed
@@ -443,9 +464,10 @@ class GridMap:
             # throw exception:
             raise Exception("Thymio location not found")
 
-        direction = self._thymio_corners[0][0] - self._thymio_corners[0][3]
-        normalized_direction = direction / np.linalg.norm(direction)
-        self._thymio_direction = normalized_direction
+        self._thymio_direction = self._thymio_corners[0][0] - self._thymio_corners[0][3]
+        # direction = self._thymio_corners[0][0] - self._thymio_corners[0][3]
+        # normalized_direction = direction / np.linalg.norm(direction)
+        # self._thymio_direction = normalized_direction
 
     def get_thymio_direction(self):
         """
