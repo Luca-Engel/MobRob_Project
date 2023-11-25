@@ -77,6 +77,28 @@ class DijkstraNavigation:
         thymio_direction = self.map.get_thymio_direction()
         path = self.map.get_path()
 
+        counter = 0
+        old_dir = np.subtract(path[1], path[0])
+        path_info = [(path[0], old_dir, counter)]
+        # Iterate through the list of pixel coordinates
+        
+        for i in range(1, len(path)):
+            # difference between two consecutive pixels
+            direction = np.subtract(path[i], path[i-1])
+            
+            if np.array_equal(direction, old_dir):
+                counter += 1
+            else:
+                #  save the counter of the previous direction,  and append the new direction to the list
+                path_info[-1] = (path_info[-1][0], path_info[-1][1], counter)
+                counter = 1
+                old_dir = direction
+                path_info.append((path[i-1], direction,-1, 1))
+        
+        path_info[-1] = (path_info[-1][0], path_info[-1][1], counter)
+
+
+
     def get_thymio_direction(self):
         """
         Returns the direction the Thymio is facing
