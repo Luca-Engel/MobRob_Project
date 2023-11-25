@@ -100,7 +100,7 @@ class DijkstraNavigation:
 
     def get_thymio_and_path_directions(self):
         """
-        Returns the thymio direction and the wanted path direction
+        Returns the normalized thymio direction and the wanted path direction vectors
         :return: (thymio_direction, wanted_path_direction) where thymio_direction is the direction the Thymio is facing and wanted_path_direction is the direction the path intends for the Thymio to go
         """
         thymio_location = np.array(self.map.get_thymio_location())
@@ -118,7 +118,9 @@ class DijkstraNavigation:
         img = cv2.arrowedLine(img, tuple(thymio_location), tuple(np.add(thymio_location, tuple(map(int, thymio_direction)))), (0, 255, 0), 2)
         cv2.imshow("direction", img)
 
-        return thymio_direction, wanted_path_direction
+        normalized_thymio_direction = thymio_direction / np.linalg.norm(thymio_direction)
+        normalized_wanted_path_direction = wanted_path_direction / np.linalg.norm(wanted_path_direction)
+        return normalized_thymio_direction, normalized_wanted_path_direction
 
 
 
