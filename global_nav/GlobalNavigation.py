@@ -108,7 +108,7 @@ class DijkstraNavigation:
         path = self.map.get_path()
         direction_changes = self.map.direction_changes
 
-        if (self._next_direction_change_idx >= len(direction_changes)):
+        if (direction_changes is None or self._next_direction_change_idx >= len(direction_changes)):
             return (0, 0), (0, 0)
 
         wanted_path_direction = np.subtract(direction_changes[self._next_direction_change_idx], thymio_location)
@@ -232,7 +232,7 @@ class DijkstraNavigation:
         thymio_location = np.array(self.map.get_thymio_location())
         direction_changes = self.map.direction_changes
 
-        if self._next_direction_change_idx >= len(direction_changes):
+        if direction_changes is None or self._next_direction_change_idx >= len(direction_changes):
             return
 
         next_direction_change = direction_changes[self._next_direction_change_idx]
