@@ -326,9 +326,11 @@ async def main():
         thymio_angle = rotation_nextpoint(thymio_direction)
         if thymio_angle < 0:
             thymio_angle = 360 + thymio_angle
+
         wanted_angle = rotation_nextpoint(wanted_path_direction)
         if wanted_angle < 0:
             wanted_angle = 360 + wanted_angle
+
         change_idx = dijkstra._next_direction_change_idx
         motion_control.pi_regulation(actual_angle=thymio_angle, wanted_angle=wanted_angle, position=position, change_idx=change_idx)
 

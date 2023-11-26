@@ -95,20 +95,20 @@ class Motion:
         elif position == 2:
             self.error = actual_angle - self.desired_angle
 
-            self.move(self.normal_speed, -self.normal_speed)
+            # self.move(self.normal_speed, -self.normal_speed)
             # if self.error > 180:
             #     self.error = 360 - self.error
-            #
-            # print("error", self.error)
-            #
-            # if self.error <  0:
-            #     print("case 1")
-            #     self.move(self.normal_speed, -self.normal_speed)
-            # if self.error > 0:
-            #     print("case 2")
-            #     self.move(-self.normal_speed, self.normal_speed)
-            # else:
-            #     position = 0
+
+            print("error", self.error)
+
+            if self.error >=  0:
+                print("case 1")
+                self.move(self.normal_speed, -self.normal_speed)
+            if self.error < 0:
+                print("case 2")
+                self.move(-self.normal_speed, self.normal_speed)
+            else:
+                position = 0
 
 
 def distance_nextpoint(actual_pos, next_pos):
