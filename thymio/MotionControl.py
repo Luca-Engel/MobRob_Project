@@ -1,7 +1,6 @@
-import time
-import numpy as np
-from tdmclient import ClientAsync
 import math
+
+from tdmclient import ClientAsync
 
 
 # Create a class for every instance of the motors
@@ -13,8 +12,8 @@ class Motion:
         self.changing_pose = False
         self.nextpoint_achieved = False
 
-        self.Kp = 1
-        self.Ki = 0.1
+        self.Kp = 10
+        self.Ki = 0
 
         self.distance = 0
         self.angle = 0
@@ -37,8 +36,9 @@ class Motion:
         }
 
     def move(self, left_speed, right_speed):
-
-       self.node.send_set_variables(self.motors(int(left_speed), int(right_speed)))
+        print("left_speed", left_speed)
+        print("right_speed", right_speed)
+        self.node.send_set_variables(self.motors(int(left_speed), int(right_speed)))
 
     def pi_regulation(self, actual_angle, wanted_angle, position, change_idx):
         self.desired_angle = wanted_angle
@@ -69,27 +69,49 @@ class Motion:
         if position == 1:
 
             if actual_angle <= abs(self.desired_angle + self.threshold_angle):
+                print("111")
                 left_speed = self.normal_speed
                 right_speed = self.normal_speed
 
                 self.error = 0
                 self.sum_error = 0
 
-            elif actual_angle > (self.desired_angle + self.threshold_angle):
-                self.error = abs(actual_angle - self.desired_angle)
-                self.sum_error += self.error
-
             elif actual_angle < (self.desired_angle - self.threshold_angle):
+                print("222")
                 self.error = abs(actual_angle - self.desired_angle)
                 self.sum_error += self.error
 
-            if self.sum_error < self.max_sum_error:
-                left_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.sum_error)
-                right_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.sum_error)
-            else:
-                left_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.max_sum_error)
-                right_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.max_sum_error)
+                print("error", self.error)
+                if self.sum_error < self.max_sum_error:
+                    print("444")
+                    left_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.sum_error)
+                    right_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.sum_error)
 
+                else:
+                    print("555")
+                    left_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.max_sum_error)
+                    right_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.max_sum_error)
+
+            elif actual_angle > (self.desired_angle + self.threshold_angle):
+                print("333")
+                self.error = abs(actual_angle - self.desired_angle)
+                self.sum_error += self.error
+
+                print("error", self.error)
+
+                if self.sum_error < self.max_sum_error:
+                    print("444")
+                    left_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.sum_error)
+                    right_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.sum_error)
+
+                else:
+                    print("555")
+                    left_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.max_sum_error)
+                    right_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.max_sum_error)
+
+
+            print("left_speed", left_speed)
+            print("right_speed", right_speed)
             self.move(left_speed, right_speed)
         # Position at 2 means that the robot need to rotate to face the next point
         elif position == 2:
