@@ -1,6 +1,6 @@
 import math
 
-from tdmclient import ClientAsync
+from tdmclient import ClientAsync, aw
 
 
 # Create a class for every instance of the motors
@@ -32,20 +32,22 @@ class Motion:
     def motors(self, speed_left, speed_right):
 
         return {
-            "motor.left.target": [speed_left], "motor.right.target": [speed_right],
+            "motor.left.target": [int(speed_left)], "motor.right.target": [int(speed_right)],
         }
 
-    def move(self, left_speed, right_speed):
+    async def move(self, left_speed, right_speed):
         print("left_speed", left_speed)
         print("right_speed", right_speed)
-        self.node.send_set_variables(self.motors(int(left_speed), int(right_speed)))
+        aw(self.node.send_set_variables(self.motors(int(left_speed), int(right_speed))))
 
     def pi_regulation(self, actual_angle, wanted_angle, position, change_idx):
         self.desired_angle = wanted_angle
 
         # Position at 0 means that the robot achieved the next point and need to stop moving
         if position == 0:
-            self.move(left_speed = 0, right_speed = 0)
+            left_speed = 0
+            right_speed = 0
+            return left_speed, right_speed
             # position = 2
 
         position = 1
@@ -112,7 +114,7 @@ class Motion:
 
             print("left_speed", left_speed)
             print("right_speed", right_speed)
-            self.move(left_speed, right_speed)
+            return left_speed, right_speed
         # Position at 2 means that the robot need to rotate to face the next point
         elif position == 2:
             self.error = actual_angle - self.desired_angle
@@ -125,10 +127,16 @@ class Motion:
 
             if self.error >=  0:
                 print("case 1")
-                self.move(self.normal_speed, -self.normal_speed)
+                left_speed = self.normal_speed
+                right_speed = -self.normal_speed
+                return left_speed, right_speed
+
             if self.error < 0:
                 print("case 2")
-                self.move(-self.normal_speed, self.normal_speed)
+                left_speed = -self.normal_speed
+                right_speed = self.normal_speed
+                return left_speed, right_speed
+
             else:
                 position = 0
 

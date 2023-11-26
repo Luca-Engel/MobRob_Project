@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from tdmclient import ClientAsync
+from tdmclient import ClientAsync, aw
 
 from map.GridMap import GridMap
 from map.GridMap import CellType
@@ -279,12 +279,12 @@ async def main():
     print("initializing")
 
     Client = ClientAsync()
-    node = await Client.wait_for_node()
-    await node.lock()
+    node = aw(Client.wait_for_node())
+    aw(node.lock())
 
     motion_control = Motion(node)
 
-    motion_control.move(0, 0)
+    aw(node.set_variables(motion_control.motors(0, 0)))
 
 
     # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_image.png')
@@ -314,7 +314,7 @@ async def main():
 
         if dijkstra.has_thymio_reached_goal():
 
-            motion_control.move(0, 0)
+            aw(node.set_variables(motion_control.motors(0, 0)))
             while True:
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -332,11 +332,12 @@ async def main():
             wanted_angle = 360 + wanted_angle
 
         change_idx = dijkstra._next_direction_change_idx
-        motion_control.pi_regulation(actual_angle=thymio_angle, wanted_angle=wanted_angle, position=position, change_idx=change_idx)
+        left_speed, right_speed = motion_control.pi_regulation(actual_angle=thymio_angle, wanted_angle=wanted_angle, position=position, change_idx=change_idx)
 
+        aw(node.set_variables(motion_control.motors(left_speed, right_speed)))
 
         if cv2.waitKey(1) & 0xFF == ord('s'):
-            motion_control.move(0, 0)
+            aw(node.set_variables(motion_control.motors(0, 0)))
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
