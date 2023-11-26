@@ -1,13 +1,16 @@
 import numpy as np
 import cv2
+from tdmclient import ClientAsync
 
 from map.GridMap import GridMap
 from map.GridMap import CellType
+from thymio.MotionControl import Motion
+from thymio.MotionControl import rotation_nextpoint
 
 from queue import PriorityQueue
 
 # MIN NORM DISTANCE TO CELL TO BE CONSIDERED AS ATTAINED
-CELL_ATTAINED_DISTANCE = 4
+CELL_ATTAINED_DISTANCE = 2
 
 KIDNAP_MIN_DISTANCE = 15
 
@@ -93,6 +96,8 @@ class DijkstraNavigation:
                 old_dx, old_dy = dx, dy
 
             prev_x, prev_y = x, y
+
+        direction_changes.append((prev_x, prev_y))
 
         self.map.set_direction_changes(direction_changes)
         return direction_changes
@@ -219,8 +224,8 @@ class DijkstraNavigation:
         :return: None
         """
 
-        dijkstra.map.update_goal_and_thymio_grid_location()
-        dijkstra.recompute_if_necessary()
+        self.map.update_goal_and_thymio_grid_location()
+        self.recompute_if_necessary()
         self._update_current_path_direction_idx()
 
 
@@ -270,7 +275,18 @@ class DijkstraNavigation:
         """
         self.map.display_feed()
 
-if __name__ == "__main__":
+async def main():
+    print("initializing")
+
+    Client = ClientAsync()
+    node = await Client.wait_for_node()
+    await node.lock()
+
+    motion_control = Motion(node)
+
+    motion_control.move(0, 0)
+
+
     # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_image.png')
     # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_obstacles_cut_out.png')
     dijkstra = DijkstraNavigation(load_from_file=None)
@@ -283,6 +299,7 @@ if __name__ == "__main__":
 
     print(direction_changes)
 
+
     while True:
         dijkstra.update_navigation()
 
@@ -290,9 +307,37 @@ if __name__ == "__main__":
         dijkstra.display_feed()
 
         thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
+        thymio_location = dijkstra.map.get_thymio_location()
 
-        if (dijkstra.has_thymio_reached_goal()):
+
+        position = 1
+
+        if dijkstra.has_thymio_reached_goal():
+
+            motion_control.move(0, 0)
+            while True:
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+            position = 0
             print("Reached goal!")
 
+
+        thymio_angle = rotation_nextpoint(thymio_direction)
+        if thymio_angle < 0:
+            thymio_angle = 360 + thymio_angle
+        wanted_angle = rotation_nextpoint(wanted_path_direction)
+        if wanted_angle < 0:
+            wanted_angle = 360 + wanted_angle
+        change_idx = dijkstra._next_direction_change_idx
+        motion_control.pi_regulation(actual_angle=thymio_angle, wanted_angle=wanted_angle, position=position, change_idx=change_idx)
+
+
+        if cv2.waitKey(1) & 0xFF == ord('s'):
+            motion_control.move(0, 0)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+
+
+if __name__ == "__main__":
+    ClientAsync.run_async_program(main)

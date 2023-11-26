@@ -28,6 +28,7 @@ class Motion:
         self.sum_error = 0
         self.max_sum_error = 30
         self.error = 0
+        self.change_idx = -1
 
     def motors(self, speed_left, speed_right):
 
@@ -37,17 +38,35 @@ class Motion:
 
     def move(self, left_speed, right_speed):
 
-       self.node.send_set_variables(self.motors(left_speed, right_speed))
+       self.node.send_set_variables(self.motors(int(left_speed), int(right_speed)))
 
-    def pi_regulation(self, actual_angle, position):
+    def pi_regulation(self, actual_angle, wanted_angle, position, change_idx):
+        self.desired_angle = wanted_angle
 
         # Position at 0 means that the robot achieved the next point and need to stop moving
         if position == 0:
             self.move(left_speed = 0, right_speed = 0)
+            # position = 2
+
+        position = 1
+
+        if (change_idx != self.change_idx and abs(actual_angle - wanted_angle) > 10): # < 6 degrees
+            position = 2
+        elif change_idx != self.change_idx:
+            self.change_idx = change_idx
+        elif abs(actual_angle -wanted_angle) > 30:
+            self.change_idx = -1
             position = 2
 
+
+        print(f"actual angle {actual_angle}")
+        print(f"desired angle {self.desired_angle}")
+        print(f"position {position}")
+
+
+
         # Position at 1 means that the robot is achieving the next point
-        elif position == 1:
+        if position == 1:
 
             if actual_angle <= abs(self.desired_angle + self.threshold_angle):
                 left_speed = self.normal_speed
@@ -74,14 +93,22 @@ class Motion:
             self.move(left_speed, right_speed)
         # Position at 2 means that the robot need to rotate to face the next point
         elif position == 2:
-            self.error = abs(actual_angle - self.desired_angle)
+            self.error = actual_angle - self.desired_angle
 
-            if self.error < self.desired_angle - self.threshold_angle:
-                self.move(self.normal_speed, -self.normal_speed)
-            if self.error > self.desired_angle + self.threshold_angle:
-                self.move(-self.normal_speed, self.normal_speed)
-            else:
-                position = 0
+            self.move(self.normal_speed, -self.normal_speed)
+            # if self.error > 180:
+            #     self.error = 360 - self.error
+            #
+            # print("error", self.error)
+            #
+            # if self.error <  0:
+            #     print("case 1")
+            #     self.move(self.normal_speed, -self.normal_speed)
+            # if self.error > 0:
+            #     print("case 2")
+            #     self.move(-self.normal_speed, self.normal_speed)
+            # else:
+            #     position = 0
 
 
 def distance_nextpoint(actual_pos, next_pos):
@@ -92,13 +119,14 @@ def distance_nextpoint(actual_pos, next_pos):
     return math.sqrt(math.pow((actual_pos[0]-next_pos[0]),2) + math.pow(actual_pos[1]-next_pos[1],2))
 
 
-def rotation_nextpoint(actual_pos, next_pos):
+def rotation_nextpoint(direction):#actual_pos, next_pos):
     """""
         Rotation of the Thymio before moving to
         the next point
         Return the value in degree
     """
-    return math.atan2(actual_pos[0]-next_pos[0], actual_pos[1]-next_pos[1])/math.pi*180
+    # return math.atan2(actual_pos[0]-next_pos[0], actual_pos[1]-next_pos[1])/math.pi*180
+    return math.atan2(direction[0], direction[1])/math.pi*180
 
 
 async def main():
