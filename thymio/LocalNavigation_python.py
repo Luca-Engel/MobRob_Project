@@ -1,18 +1,16 @@
-from tdmclient import ClientAsync
+import asyncio
+from tdmclient import ClientAsync, aw
 
 timer_period = [50, 100]
 
 target_dir = 100  # positive to the right
 
-# Every time the prox event is generated, the robot goes back accordingly
-# of what is sensed on the middle front proximity sensor
 LEFT_SENSOR = 0
 LEFT_CENTER_SENSOR = 1
 FRONT_SENSOR = 2
 RIGHT_CENTER_SENSOR = 3
 RIGHT_SENSOR = 4
 
-# unused, still here
 LEFT_BACK = 5
 RIGHT_BACK = 6
 
@@ -39,9 +37,14 @@ toggle1 = 0
 motor_left_target = 100
 motor_right_target = 100
 
+# Initialize the Thymio client
+client = ClientAsync()
 
-def judge_severity():
-    global prox_horizontal, danger_state, danger_dir
+
+async def judge_severity():
+    prox_horizontal = aw(node.wait_for_variable("prox.horizontal"))
+
+    global danger_state, danger_dir
     danger_state = SAFE
     for i in range(5):
         if prox_horizontal[i] > STOP_THRESH:
@@ -55,46 +58,42 @@ def judge_severity():
             danger_dir[i] = SAFE
 
 
-def danger_nav():
+async def danger_nav():
     global motor_left_target, motor_right_target, toggle0, target_dir
 
-    # Simple cases, one side is totally safe, the other is not
     if danger_dir[LEFT_SENSOR] == SAFE:
-        turn(l)
-        return
+        await turn(l)
     elif danger_dir[RIGHT_SENSOR] == SAFE:
-        turn(r)
-        return
-    # Consider the target direction, check if it's safe to go there
-    # If not, enter the backward mode
-    if target_dir > 0:
+        await turn(r)
+    elif target_dir > 0:
         if danger_dir[RIGHT_SENSOR] < STOP:
-            turn(r)
+            await turn(r)
         else:
-            turn(b)
+            await turn(b)
     else:
         if danger_dir[LEFT_SENSOR] < STOP:
-            turn(l)
+            await turn(l)
         else:
-            turn(b)
-    # Just here for sanity
-    turn(b)
+            await turn(b)
 
 
-def turn(dir):
+async def turn(dir):
     global motor_right_target, motor_left_target
     if dir == r:
+        aw(node.set_variable("motor.left.target": [-500], "motor.right.target": [500]))
         motor_right_target = -500
         motor_left_target = 500
     elif dir == l:
+        aw(node.set_variable("motor.left.target": [500], "motor.right.target": [-500]))
         motor_right_target = 500
         motor_left_target = -500
     else:
+        aw(node.set_variable("motor.left.target": [-300], "motor.right.target": [-300]))
         motor_right_target = -300
         motor_left_target = -300
 
 
-def potential_field():
+async def potential_field():
     global prox_horizontal, motor_left_target, motor_right_target
     x = prox_horizontal
     y1 = 0
@@ -106,34 +105,34 @@ def potential_field():
     motor_right_target = motor_right_target // 2 + y2
 
 
-def on_prox(client, **kwargs):
-    global prox_horizontal, motor_left_target, motor_right_target, toggle0, toggle1
+async def prox_handler():
+    global prox_horizontal, motor_left_target, motor_right_target, leds_top
     if toggle0 or toggle1:
         return
-    judge_severity()
+    await judge_severity()
     if danger_state == STOP:
-        client.set_leds_top([32, 0, 0])
-        danger_nav()
+        leds_top = [32, 0, 0]
+        await danger_nav()
     elif danger_state == WARN:
-        client.set_leds_top([16, 16, 0])
-        potential_field()
+        leds_top = [16, 16, 0]
+        await potential_field()
     else:
         motor_left_target = 100
         motor_right_target = 100
-        client.set_leds_top([0, 16, 16])
+        leds_top = [0, 16, 16]
 
 
-def on_timer0(client, **kwargs):
+async def timer0_handler():
     global toggle0
     if not toggle0:
         return
     else:
         toggle0 += 1
     if toggle0 >= 5:
-        toggle0 = 0  # De-activation
+        toggle0 = 0
 
 
-def on_timer1(client, **kwargs):
+async def timer1_handler():
     global toggle1
     if not toggle1:
         return
@@ -143,15 +142,31 @@ def on_timer1(client, **kwargs):
         toggle1 = 0
 
 
-if __name__ == "__main__":
-    with ClientAsync() as client:
-        # Register event handlers
-        aw(on_prox)
-        aw(on_timer0)
-        aw(on_timer1)
+async def main():
+    Client = ClientAsync()
+    node = aw(Client.wait_for_node())
+    aw(node.lock())
 
-        # Set timer periods
-        set_timer_period(0, timer_period[0])
-        set_timer_period(1, timer_period[1])
-        # Main loop
-        client.run_forever()
+    # load the program onto the thymio
+    await node.compile(prog)
+
+
+# Define the Aseba program
+prog = f"""
+var timer0_period = {timer_period[0]}
+var timer1_period = {timer_period[1]}
+
+onevent prox
+  call prox_handler
+
+onevent timer0
+  call timer0_handler
+
+onevent timer1
+  call timer1_handler
+"""
+
+# Run the Aseba program asynchronously
+
+if __name__ == "__main__":
+    ClientAsync.run_async_program(main)

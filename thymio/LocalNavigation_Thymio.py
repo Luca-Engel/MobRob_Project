@@ -1,10 +1,10 @@
-from tdmclient import ClientAsync
+%%run_python
 
-timer_period = [50, 100]
+timer_period[0] = 50
+timer_period[1] = 100
 
 target_dir = 100  # positive to the right
-
-# Every time the prox event is generated, the robot goes back accordingly
+# Every time the prox event is generated, the robot go back accordingly
 # of what is sensed on the middle front proximity sensor
 LEFT_SENSOR = 0
 LEFT_CENTER_SENSOR = 1
@@ -44,12 +44,12 @@ def judge_severity():
     global prox_horizontal, danger_state, danger_dir
     danger_state = SAFE
     for i in range(5):
-        if prox_horizontal[i] > STOP_THRESH:
+        if (prox_horizontal[i] > STOP_THRESH):
             danger_dir[i] = STOP
             danger_state = STOP
-        elif prox_horizontal[i] > WARN_THRESH:
+        elif (prox_horizontal[i] > WARN_THRESH):
             danger_dir[i] = WARN
-            if danger_state < WARN:
+            if (danger_state < WARN):
                 danger_state = WARN
         else:
             danger_dir[i] = SAFE
@@ -59,21 +59,21 @@ def danger_nav():
     global motor_left_target, motor_right_target, toggle0, target_dir
 
     # Simple cases, one side is totally safe, the other is not
-    if danger_dir[LEFT_SENSOR] == SAFE:
+    if (danger_dir[LEFT_SENSOR] == SAFE):
         turn(l)
         return
-    elif danger_dir[RIGHT_SENSOR] == SAFE:
+    elif (danger_dir[RIGHT_SENSOR] == SAFE):
         turn(r)
         return
-    # Consider the target direction, check if it's safe to go there
-    # If not, enter the backward mode
-    if target_dir > 0:
-        if danger_dir[RIGHT_SENSOR] < STOP:
+    # Consider target direction, check if it safe to go there
+    # If not, enter backwards mode
+    if (target_dir > 0):
+        if (danger_dir[RIGHT_SENSOR] < STOP):
             turn(r)
         else:
             turn(b)
     else:
-        if danger_dir[LEFT_SENSOR] < STOP:
+        if (danger_dir[LEFT_SENSOR] < STOP):
             turn(l)
         else:
             turn(b)
@@ -106,52 +106,44 @@ def potential_field():
     motor_right_target = motor_right_target // 2 + y2
 
 
-def on_prox(client, **kwargs):
-    global prox_horizontal, motor_left_target, motor_right_target, toggle0, toggle1
-    if toggle0 or toggle1:
+@onevent
+def prox():
+    global prox_horizontal, motor_left_target, motor_right_target, leds_top
+    if (toggle0 or toggle1):
         return
     judge_severity()
-    if danger_state == STOP:
-        client.set_leds_top([32, 0, 0])
+    if (danger_state == STOP):  # Override all other nav, thymio needs to turn to safety
+        leds_top = [32, 0, 0]
         danger_nav()
-    elif danger_state == WARN:
-        client.set_leds_top([16, 16, 0])
+
+    elif (danger_state == WARN):  # Add potential field vector to whatever nav we used before
+        leds_top = [16, 16, 0]
         potential_field()
-    else:
+
+    else:  # Safe nav, no control needed
         motor_left_target = 100
         motor_right_target = 100
-        client.set_leds_top([0, 16, 16])
+        leds_top = [0, 16, 16]
 
 
-def on_timer0(client, **kwargs):
+@onevent
+def timer0():
     global toggle0
-    if not toggle0:
+    if (not toggle0):  # If unasked for, do nothing
         return
     else:
         toggle0 += 1
-    if toggle0 >= 5:
+    if (toggle0 >= 5):
         toggle0 = 0  # De-activation
 
 
-def on_timer1(client, **kwargs):
+@onevent
+def timer1():
     global toggle1
-    if not toggle1:
+    if (not toggle1):
         return
     else:
         toggle1 += 1
-    if toggle1 >= 5:
+    if (toggle1 >= 5):
         toggle1 = 0
 
-
-if __name__ == "__main__":
-    with ClientAsync() as client:
-        # Register event handlers
-        aw(on_prox)
-        aw(on_timer0)
-        aw(on_timer1)
-
-        # Set timer periods
-        set_timer_period(0, timer_period[0])
-        set_timer_period(1, timer_period[1])
-        # Main loop
-        client.run_forever()
