@@ -12,8 +12,8 @@ class Motion:
         self.changing_pose = False
         self.nextpoint_achieved = False
 
-        self.Kp = 10
-        self.Ki = 0
+        self.Kp = 3
+        self.Ki = 0.2
 
         self.distance = 0
         self.angle = 0
@@ -66,7 +66,8 @@ class Motion:
 
         # Position at 1 means that the robot is achieving the next point
         if position == 1:
-
+            left_speed = 0
+            right_speed = 0
             if actual_angle <= abs(self.desired_angle + self.threshold_angle):
                 print("111")
                 left_speed = self.normal_speed

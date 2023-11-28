@@ -80,6 +80,7 @@ class LocalNavigation:
 
     def danger_navigation(self, thymio_direction, wanted_path_direction, thymio_location):
         # TODO: Implement this
+        return 0
 
 
     def danger_nav(self):

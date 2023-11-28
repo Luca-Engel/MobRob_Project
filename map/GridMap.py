@@ -6,7 +6,9 @@ import numpy as np
 from aruco.marker_recognition import ArUcoMarkerDetector
 from opencv.object_recognition import ObjectDetector
 from opencv.webcam_input import WebcamFeed
-from global_nav.GlobalNavigation import CELL_ATTAINED_DISTANCE
+
+# MIN NORM DISTANCE TO CELL TO BE CONSIDERED AS ATTAINED
+CELL_ATTAINED_DISTANCE = 2
 
 # Width/2 of the thymio in grid cells
 THYMIO_HALF_SIZE = 12
@@ -512,7 +514,7 @@ class GridMap:
         closest_cell = None
 
         for cell_location in path:
-            distance = np.linalg.norm(thymio_location - cell_location)
+            distance = np.linalg.norm(np.array(thymio_location) - np.array(cell_location))
 
             if distance < min_distance:
                 min_distance = distance

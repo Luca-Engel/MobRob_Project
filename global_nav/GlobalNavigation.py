@@ -4,14 +4,14 @@ from tdmclient import ClientAsync, aw
 
 from map.GridMap import GridMap
 from map.GridMap import CellType
+from map.GridMap import CELL_ATTAINED_DISTANCE
 from thymio.MotionControl import Motion
 from thymio.MotionControl import rotation_nextpoint
 from thymio.LocalNavigation import LocalNavigation
 
 from queue import PriorityQueue
 
-# MIN NORM DISTANCE TO CELL TO BE CONSIDERED AS ATTAINED
-CELL_ATTAINED_DISTANCE = 2
+
 
 KIDNAP_MIN_DISTANCE = 15
 
@@ -281,6 +281,10 @@ class DijkstraNavigation:
         """
         self.map.set_last_known_cell_before_danger(thymio_location)
 
+    def handle_local_navigation_exit(self):
+        # TODO
+        return 0
+
 
 
 async def main():
@@ -356,6 +360,11 @@ async def main():
                                                                position=position, change_idx=change_idx)
 
         aw(node.set_variables(motion_control.motors(left_speed, right_speed)))
+        aw(node.wait_for_variables())
+        Sensor_left = node["motor.left.speed"]
+        Sensor_right = node["motor.right.speed"]
+
+        print("Actual speed:", "left", Sensor_left, "right", Sensor_right)
 
         if cv2.waitKey(1) & 0xFF == ord('s'):
             aw(node.set_variables(motion_control.motors(0, 0)))
