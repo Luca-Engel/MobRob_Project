@@ -27,7 +27,7 @@ class SensorThresh(enum.Enum):
         return self.value
 
 class DangerState(enum.Enum):
-    SAFE = 0    
+    SAFE = 0
     WARN = 1
     STOP = 2
 
@@ -77,6 +77,10 @@ class LocalNavigation:
             else:
                 self.danger_dir[i] = DangerState.SAFE
         return danger_state
+
+    def danger_navigation(self, thymio_direction, wanted_path_direction, thymio_location):
+        # TODO: Implement this
+
 
     def danger_nav(self):
         # Simple cases, one side is totally safe, the other is not
@@ -142,7 +146,7 @@ class LocalNavigation:
                 #memorize current goal, set a flag blocking Global Nav
                 print("thymio enters unsafe waters")
             if (self.danger_state == DangerState.STOP):  # Override all other nav, thymio needs to turn to safety
-                
+
                 left_speed, right_speed = self.danger_nav()
                 print("danger")
 

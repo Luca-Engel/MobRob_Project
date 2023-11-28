@@ -6,6 +6,7 @@ from map.GridMap import GridMap
 from map.GridMap import CellType
 from thymio.MotionControl import Motion
 from thymio.MotionControl import rotation_nextpoint
+from thymio.LocalNavigation import LocalNavigation
 
 from queue import PriorityQueue
 
@@ -27,6 +28,7 @@ class DijkstraNavigation:
         self._last_known_thymio_location = self.map.get_thymio_location()
         self._last_known_goal_location = self.map.get_goal_location()
         self._next_direction_change_idx = 0
+        # contains the cell where the thymio was last before going into local navigation
 
     def recompute_if_necessary(self):
         """
@@ -76,7 +78,6 @@ class DijkstraNavigation:
 
         return distance > KIDNAP_MIN_DISTANCE
 
-
     def _find_direction_changes(self):
         if len(self.path) < 2:
             return []
@@ -102,7 +103,6 @@ class DijkstraNavigation:
         self.map.set_direction_changes(direction_changes)
         return direction_changes
 
-
     def get_thymio_and_path_directions(self):
         """
         Returns the normalized thymio direction and the wanted path direction vectors
@@ -119,15 +119,15 @@ class DijkstraNavigation:
         wanted_path_direction = np.subtract(direction_changes[self._next_direction_change_idx], thymio_location)
 
         # draw arrowed line for wanted path direction and actual thymio direction
-        img = cv2.arrowedLine(self.map.grid_image, tuple(thymio_location), tuple(np.add(thymio_location, 10*wanted_path_direction)), (0, 0, 0), 2)
-        img = cv2.arrowedLine(img, tuple(thymio_location), tuple(np.add(thymio_location, tuple(map(int, thymio_direction)))), (0, 255, 0), 2)
+        img = cv2.arrowedLine(self.map.grid_image, tuple(thymio_location),
+                              tuple(np.add(thymio_location, 10 * wanted_path_direction)), (0, 0, 0), 2)
+        img = cv2.arrowedLine(img, tuple(thymio_location),
+                              tuple(np.add(thymio_location, tuple(map(int, thymio_direction)))), (0, 255, 0), 2)
         cv2.imshow("direction", img)
 
         normalized_thymio_direction = thymio_direction / np.linalg.norm(thymio_direction)
         normalized_wanted_path_direction = wanted_path_direction / np.linalg.norm(wanted_path_direction)
         return normalized_thymio_direction, normalized_wanted_path_direction
-
-
 
     def get_thymio_direction(self):
         """
@@ -228,7 +228,6 @@ class DijkstraNavigation:
         self.recompute_if_necessary()
         self._update_current_path_direction_idx()
 
-
     def _update_current_path_direction_idx(self):
         """
         Updates the current path direction index
@@ -247,7 +246,6 @@ class DijkstraNavigation:
             print("Reached direction change: ", next_direction_change)
             self._next_direction_change_idx += 1
 
-
     def has_thymio_reached_goal(self):
         """
         Checks if the Thymio has reached the goal
@@ -259,7 +257,6 @@ class DijkstraNavigation:
         distance = np.linalg.norm(thymio_location - goal_location)
 
         return distance < CELL_ATTAINED_DISTANCE
-
 
     def display_grid_as_image(self):
         """
@@ -275,6 +272,17 @@ class DijkstraNavigation:
         """
         self.map.display_feed()
 
+
+    def find_closest_cell_on_path(self, thymio_location):
+        """
+        Finds the closest cell on the path and stores it in the map instance
+        :param thymio_location: The Thymio's location
+        :return: None The closest cell on the path
+        """
+        self.map.set_last_known_cell_before_danger(thymio_location)
+
+
+
 async def main():
     print("initializing")
 
@@ -285,7 +293,6 @@ async def main():
     motion_control = Motion(node)
 
     aw(node.set_variables(motion_control.motors(0, 0)))
-
 
     # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_image.png')
     # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_obstacles_cut_out.png')
@@ -299,8 +306,23 @@ async def main():
 
     print(direction_changes)
 
+    local_navigation = LocalNavigation()
 
     while True:
+
+        # local navigation check
+        if (local_navigation.danger_state != 0):
+            thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
+            thymio_location = dijkstra.map.get_thymio_location()
+
+            dijkstra.find_closest_cell_on_path(thymio_location)
+
+            # TODO: Mar
+            local_navigation.danger_navigation(thymio_direction, wanted_path_direction, thymio_location)
+
+            # TODO: Luca
+            dijkstra.handle_local_navigation_exit()
+
         dijkstra.update_navigation()
 
         dijkstra.display_grid_as_image()
@@ -308,7 +330,6 @@ async def main():
 
         thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
         thymio_location = dijkstra.map.get_thymio_location()
-
 
         position = 1
 
@@ -322,7 +343,6 @@ async def main():
             position = 0
             print("Reached goal!")
 
-
         thymio_angle = rotation_nextpoint(thymio_direction)
         if thymio_angle < 0:
             thymio_angle = 360 + thymio_angle
@@ -332,7 +352,8 @@ async def main():
             wanted_angle = 360 + wanted_angle
 
         change_idx = dijkstra._next_direction_change_idx
-        left_speed, right_speed = motion_control.pi_regulation(actual_angle=thymio_angle, wanted_angle=wanted_angle, position=position, change_idx=change_idx)
+        left_speed, right_speed = motion_control.pi_regulation(actual_angle=thymio_angle, wanted_angle=wanted_angle,
+                                                               position=position, change_idx=change_idx)
 
         aw(node.set_variables(motion_control.motors(left_speed, right_speed)))
 

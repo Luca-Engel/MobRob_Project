@@ -6,6 +6,7 @@ import numpy as np
 from aruco.marker_recognition import ArUcoMarkerDetector
 from opencv.object_recognition import ObjectDetector
 from opencv.webcam_input import WebcamFeed
+from global_nav.GlobalNavigation import CELL_ATTAINED_DISTANCE
 
 # Width/2 of the thymio in grid cells
 THYMIO_HALF_SIZE = 12
@@ -43,6 +44,8 @@ class GridMap:
         self.path = None
         self.direction_changes = None
         self._grid_image_is_up_to_date = False
+
+        self._last_known_cell_before_danger = None
 
         self._color_mapping = {
             CellType.FREE: (255, 255, 255),  # White
@@ -496,6 +499,51 @@ class GridMap:
         :return: the current path
         """
         return self.path
+
+
+    def set_last_known_cell_before_danger(self, thymio_location):
+        """
+        Sets the last known cell before danger
+        :param thymio_location: the current thymio location
+        :return: None
+        """
+        path = self.get_path()
+        min_distance = np.inf
+        closest_cell = None
+
+        for cell_location in path:
+            distance = np.linalg.norm(thymio_location - cell_location)
+
+            if distance < min_distance:
+                min_distance = distance
+                closest_cell = cell_location
+
+        self._last_known_cell_before_danger = closest_cell
+
+
+    def check_if_returned_to_path(self):
+        """
+        Checks if the Thymio has returned to the path
+        :return: True if the Thymio has returned to the path, False otherwise
+        """
+        thymio_location = np.array(self.get_thymio_location())
+        path = self.get_path()
+
+        has_passed_last_known_cell = False
+
+        for cell_location in path:
+            if np.array_equal(cell_location, self._last_known_cell_before_danger):
+                has_passed_last_known_cell = True
+
+            if not has_passed_last_known_cell:
+                continue
+
+            distance = np.linalg.norm(thymio_location - cell_location)
+
+            if distance < CELL_ATTAINED_DISTANCE:
+                return True
+
+        return False
 
 
 if __name__ == "__main__":
