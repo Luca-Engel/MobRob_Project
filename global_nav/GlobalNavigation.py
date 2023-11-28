@@ -22,6 +22,7 @@ class DijkstraNavigation:
         self.path = []
         # self.start = self.map.get_thymio_grid_coordinates()
         # self.goal = self.map.get_goal_grid_coordinates()
+        print("Start: ", self.map.get_thymio_location())
         self.start = self.map.get_thymio_location()
         self.goal = self.map.get_goal_location()
         self.is_path_up_to_date = False

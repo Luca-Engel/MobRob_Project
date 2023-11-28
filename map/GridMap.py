@@ -67,7 +67,15 @@ class GridMap:
         self._image_feed_width = None
         self._image_feed_height = None
 
-        self.kalman_filter = KalmanFilter()
+        contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
+        # print("corners", corners)
+        print("corners shape", corners.shape)
+        corners_for_thymio = corners[np.where(ids == self._thymio_marker_id)[0]][0][0]
+        print("corners_for_thymio", corners_for_thymio.shape)
+        x, y = self._convert_to_centroid_grid_indices(corners_for_thymio, len(binary_image[0]), len(binary_image))
+        # direction = corners_for_thymio[0] - corners_for_thymio[3]
+
+        self.kalman_filter = KalmanFilter(np.array([x, y]))
 
         while True:
             if cv2.waitKey(1) & 0xFF == ord('b'):
@@ -169,7 +177,7 @@ class GridMap:
         # Convert to uint8 for imshow
         self.grid_image = self.grid_image.astype(np.uint8)
 
-    def update_grid(self):
+    def update_grid(self, update_kalman_filter=True):
         """
         Updates the grid with the current webcam feed.
         Automatically removes the markers from the grid.
@@ -197,6 +205,17 @@ class GridMap:
                     self._update_grid_with_object(row_pixel, column_pixel, image_width, image_height, CellType.OBJECT)
 
         self._remove_markers_as_objects_from_grid(binary_image, corners, ids)
+
+
+        if update_kalman_filter:
+            # print("corners", corners)
+            print("corners shape", corners.shape)
+            corners_for_thymio = corners[np.where(ids == self._thymio_marker_id)[0]][0][0]
+            print("corners_for_thymio", corners_for_thymio.shape)
+            x, y = self._convert_to_centroid_grid_indices(corners_for_thymio, len(binary_image[0]), len(binary_image))
+            direction = corners_for_thymio[0] - corners_for_thymio[3]
+
+            self.kalman_filter.update(np.array([x, y]), direction, 0, 0)
 
         self._update_thymio_grid_location_and_direction(binary_image, corners, ids)
         self._update_goal_grid_location(binary_image, corners, ids)
