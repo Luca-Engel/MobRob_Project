@@ -6,6 +6,7 @@ import numpy as np
 from aruco.marker_recognition import ArUcoMarkerDetector
 from opencv.object_recognition import ObjectDetector
 from opencv.webcam_input import WebcamFeed
+from filtering.KalmanFilter import KalmanFilter
 
 # MIN NORM DISTANCE TO CELL TO BE CONSIDERED AS ATTAINED
 CELL_ATTAINED_DISTANCE = 2
@@ -65,6 +66,8 @@ class GridMap:
         self._object_detector = ObjectDetector(self._aruco_detector)
         self._image_feed_width = None
         self._image_feed_height = None
+
+        self.kalman_filter = KalmanFilter()
 
         while True:
             if cv2.waitKey(1) & 0xFF == ord('b'):
@@ -449,16 +452,25 @@ class GridMap:
         return self._goal_location
 
 
-    def get_thymio_location(self):
-        """
-        Returns the thymio location in grid coordinates
-        :return: (x, y) tuple
-        """
+    def _get_camera_thymio_location_est(self):
         if self._thymio_location is None:
             # throw exception:
             raise Exception("Thymio location not found")
 
         return self._thymio_location
+
+    def get_thymio_location(self):
+        """
+        Returns the thymio location in grid coordinates
+        :return: (x, y) tuple
+        """
+        # if self._thymio_location is None:
+        #     # throw exception:
+        #     raise Exception("Thymio location not found")
+        #
+        # return self._thymio_location
+
+        return self.kalman_filter.get_location_est()
 
     def _update_thymio_direction(self):
         """
@@ -474,11 +486,7 @@ class GridMap:
         # normalized_direction = direction / np.linalg.norm(direction)
         # self._thymio_direction = normalized_direction
 
-    def get_thymio_direction(self):
-        """
-        Returns the thymio direction in grid coordinates
-        :return: (x, y) tuple
-        """
+    def _get_camera_thymio_direction_est(self):
         if self._thymio_corners is None:
             # throw exception:
             raise Exception("Thymio location not found")
@@ -487,6 +495,15 @@ class GridMap:
             self._update_thymio_direction()
 
         return self._thymio_direction
+
+
+    def get_thymio_direction(self):
+        """
+        Returns the thymio direction in grid coordinates
+        :return: (x, y) tuple
+        """
+
+        return self.kalman_filter.get_direction_est()
 
     def get_grid(self):
         """
@@ -546,6 +563,19 @@ class GridMap:
                 return True
 
         return False
+
+    def update_kalman_filter(self, speed_left_wheel, speed_right_wheel):
+        """
+        Updates the Kalman filter
+        :return: None
+        """
+        thymio_location = self._get_camera_thymio_location_est()
+        thymio_direction = self._get_camera_thymio_direction_est()
+
+        self.kalman_filter.update(position_camera_est=thymio_location,
+                                  direction_camera_est=thymio_direction,
+                                  left_wheel_speed=speed_left_wheel,
+                                  right_wheel_speed=speed_right_wheel)
 
 
 if __name__ == "__main__":

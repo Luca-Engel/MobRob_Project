@@ -361,15 +361,18 @@ async def main():
 
         aw(node.set_variables(motion_control.motors(left_speed, right_speed)))
         aw(node.wait_for_variables())
-        Sensor_left = node["motor.left.speed"]
-        Sensor_right = node["motor.right.speed"]
+        left_wheel_speed = node["motor.left.speed"]
+        right_wheel_speed = node["motor.right.speed"]
 
-        print("Actual speed:", "left", Sensor_left, "right", Sensor_right)
+        print("Actual speed:", "left", left_wheel_speed, "right", right_wheel_speed)
 
         if cv2.waitKey(1) & 0xFF == ord('s'):
             aw(node.set_variables(motion_control.motors(0, 0)))
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+
+
+        dijkstra.map.update_kalman_filter(speed_left_wheel=left_wheel_speed, speed_right_wheel=right_wheel_speed)
 
 
 if __name__ == "__main__":
