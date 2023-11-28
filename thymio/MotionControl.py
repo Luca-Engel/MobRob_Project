@@ -1,157 +1,169 @@
-from tdmclient import ClientAsync
+import math
 
-timer_period = [50, 100]
-
-target_dir = 100  # positive to the right
-
-# Every time the prox event is generated, the robot goes back accordingly
-# of what is sensed on the middle front proximity sensor
-LEFT_SENSOR = 0
-LEFT_CENTER_SENSOR = 1
-FRONT_SENSOR = 2
-RIGHT_CENTER_SENSOR = 3
-RIGHT_SENSOR = 4
-
-# unused, still here
-LEFT_BACK = 5
-RIGHT_BACK = 6
-
-WARN_THRESH = 1000
-STOP_THRESH = 3000
-
-SAFE = 0
-WARN = 1
-STOP = 2
-
-danger_state = 0
-danger_dir = [0, 0, 0, 0, 0]
-
-Wl = [40, 20, -20, -20, -40]
-Wr = [-40, -20, -20, 20, 40]
-
-l = 1
-r = 2
-b = 3
-
-toggle0 = 0
-toggle1 = 0
-
-motor_left_target = 100
-motor_right_target = 100
+from tdmclient import ClientAsync, aw
 
 
-def judge_severity():
-    global prox_horizontal, danger_state, danger_dir
-    danger_state = SAFE
-    for i in range(5):
-        if prox_horizontal[i] > STOP_THRESH:
-            danger_dir[i] = STOP
-            danger_state = STOP
-        elif prox_horizontal[i] > WARN_THRESH:
-            danger_dir[i] = WARN
-            if danger_state < WARN:
-                danger_state = WARN
-        else:
-            danger_dir[i] = SAFE
+# Create a class for every instance of the motors
+class Motion:
+    def __init__(self, node):
+
+        self.node = node
+
+        self.changing_pose = False
+        self.nextpoint_achieved = False
+
+        self.Kp = 10
+        self.Ki = 0
+
+        self.distance = 0
+        self.angle = 0
+        self.normal_speed = 100
+
+        self.threshold_angle = 2
+        self.desired_angle = 0
+        # Need to calibrate this for the lecture of the angle
+        self.calibration = 5
+
+        self.sum_error = 0
+        self.max_sum_error = 30
+        self.error = 0
+        self.change_idx = -1
+
+    def motors(self, speed_left, speed_right):
+
+        return {
+            "motor.left.target": [int(speed_left)], "motor.right.target": [int(speed_right)],
+        }
+
+    async def move(self, left_speed, right_speed):
+        print("left_speed", left_speed)
+        print("right_speed", right_speed)
+        aw(self.node.send_set_variables(self.motors(int(left_speed), int(right_speed))))
+
+    def pi_regulation(self, actual_angle, wanted_angle, position, change_idx):
+        self.desired_angle = wanted_angle
+
+        # Position at 0 means that the robot achieved the next point and need to stop moving
+        if position == 0:
+            left_speed = 0
+            right_speed = 0
+            return left_speed, right_speed
+            # position = 2
+
+        position = 1
+
+        if (change_idx != self.change_idx and abs(actual_angle - wanted_angle) > 10):  # < 6 degrees
+            position = 2
+        elif change_idx != self.change_idx:
+            self.change_idx = change_idx
+        elif abs(actual_angle - wanted_angle) > 30:
+            self.change_idx = -1
+            position = 2
+
+        print(f"actual angle {actual_angle}")
+        print(f"desired angle {self.desired_angle}")
+        print(f"position {position}")
+
+        # Position at 1 means that the robot is achieving the next point
+        if position == 1:
+
+            if actual_angle <= abs(self.desired_angle + self.threshold_angle):
+                print("111")
+                left_speed = self.normal_speed
+                right_speed = self.normal_speed
+
+                self.error = 0
+                self.sum_error = 0
+
+            elif actual_angle < (self.desired_angle - self.threshold_angle):
+                print("222")
+                self.error = abs(actual_angle - self.desired_angle)
+                self.sum_error += self.error
+
+                print("error", self.error)
+                if self.sum_error < self.max_sum_error:
+                    print("444")
+                    left_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.sum_error)
+                    right_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.sum_error)
+
+                else:
+                    print("555")
+                    left_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.max_sum_error)
+                    right_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.max_sum_error)
+
+            elif actual_angle > (self.desired_angle + self.threshold_angle):
+                print("333")
+                self.error = abs(actual_angle - self.desired_angle)
+                self.sum_error += self.error
+
+                print("error", self.error)
+
+                if self.sum_error < self.max_sum_error:
+                    print("444")
+                    left_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.sum_error)
+                    right_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.sum_error)
+
+                else:
+                    print("555")
+                    left_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.max_sum_error)
+                    right_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.max_sum_error)
+
+            print("left_speed", left_speed)
+            print("right_speed", right_speed)
+            return left_speed, right_speed
+        # Position at 2 means that the robot need to rotate to face the next point
+        elif position == 2:
+            self.error = actual_angle - self.desired_angle
+
+            # self.move(self.normal_speed, -self.normal_speed)
+            # if self.error > 180:
+            #     self.error = 360 - self.error
+
+            print("error", self.error)
+
+            if self.error >= 0:
+                print("case 1")
+                left_speed = self.normal_speed
+                right_speed = -self.normal_speed
+                return left_speed, right_speed
+
+            if self.error < 0:
+                print("case 2")
+                left_speed = -self.normal_speed
+                right_speed = self.normal_speed
+                return left_speed, right_speed
+
+            else:
+                position = 0
 
 
-def danger_nav():
-    global motor_left_target, motor_right_target, toggle0, target_dir
-
-    # Simple cases, one side is totally safe, the other is not
-    if danger_dir[LEFT_SENSOR] == SAFE:
-        turn(l)
-        return
-    elif danger_dir[RIGHT_SENSOR] == SAFE:
-        turn(r)
-        return
-    # Consider the target direction, check if it's safe to go there
-    # If not, enter the backward mode
-    if target_dir > 0:
-        if danger_dir[RIGHT_SENSOR] < STOP:
-            turn(r)
-        else:
-            turn(b)
-    else:
-        if danger_dir[LEFT_SENSOR] < STOP:
-            turn(l)
-        else:
-            turn(b)
-    # Just here for sanity
-    turn(b)
+def distance_nextpoint(actual_pos, next_pos):
+    """""
+        Calculate the distance to the next point in
+        the global navigation
+    """
+    return math.sqrt(math.pow((actual_pos[0] - next_pos[0]), 2) + math.pow(actual_pos[1] - next_pos[1], 2))
 
 
-def turn(dir):
-    global motor_right_target, motor_left_target
-    if dir == r:
-        motor_right_target = -500
-        motor_left_target = 500
-    elif dir == l:
-        motor_right_target = 500
-        motor_left_target = -500
-    else:
-        motor_right_target = -300
-        motor_left_target = -300
+def rotation_nextpoint(direction):  # actual_pos, next_pos):
+    """""
+        Rotation of the Thymio before moving to
+        the next point
+        Return the value in degree
+    """
+    # return math.atan2(actual_pos[0]-next_pos[0], actual_pos[1]-next_pos[1])/math.pi*180
+    return math.atan2(direction[0], direction[1]) / math.pi * 180
 
 
-def potential_field():
-    global prox_horizontal, motor_left_target, motor_right_target
-    x = prox_horizontal
-    y1 = 0
-    y2 = 0
-    for i in range(5):
-        y1 += Wl[i] * x[i] // 200
-        y2 += Wr[i] * x[i] // 200
-    motor_left_target = motor_left_target // 2 + y1
-    motor_right_target = motor_right_target // 2 + y2
+async def main():
+    # Connecting the thymio
+    Client = ClientAsync()
+    node = await Client.wait_for_node()
+    await node.lock()
+    MotorControl = Motion(node)
 
-
-def on_prox(client, **kwargs):
-    global prox_horizontal, motor_left_target, motor_right_target, toggle0, toggle1
-    if toggle0 or toggle1:
-        return
-    judge_severity()
-    if danger_state == STOP:
-        client.set_leds_top([32, 0, 0])
-        danger_nav()
-    elif danger_state == WARN:
-        client.set_leds_top([16, 16, 0])
-        potential_field()
-    else:
-        motor_left_target = 100
-        motor_right_target = 100
-        client.set_leds_top([0, 16, 16])
-
-
-def on_timer0(client, **kwargs):
-    global toggle0
-    if not toggle0:
-        return
-    else:
-        toggle0 += 1
-    if toggle0 >= 5:
-        toggle0 = 0  # De-activation
-
-
-def on_timer1(client, **kwargs):
-    global toggle1
-    if not toggle1:
-        return
-    else:
-        toggle1 += 1
-    if toggle1 >= 5:
-        toggle1 = 0
+    MotorControl.move(0, 0)
 
 
 if __name__ == "__main__":
-    with ClientAsync() as client:
-        # Register event handlers
-        aw(on_prox)
-        aw(on_timer0)
-        aw(on_timer1)
-
-        # Set timer periods
-        set_timer_period(0, timer_period[0])
-        set_timer_period(1, timer_period[1])
-        # Main loop
-        client.run_forever()
+    ClientAsync.run_async_program(main)
