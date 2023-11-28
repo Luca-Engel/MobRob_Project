@@ -321,7 +321,7 @@ async def main():
 
             dijkstra.find_closest_cell_on_path(thymio_location)
 
-            # TODO: Mar
+            # TODO: Marc
             local_navigation.danger_navigation(thymio_direction, wanted_path_direction, thymio_location)
 
             # TODO: Luca
