@@ -157,6 +157,7 @@ class DijkstraNavigation:
 
         rows, cols = grid.shape
         distances = np.full((rows, cols), -1)  # Initialize distances with infinity
+        nb_turns = np.full((rows, cols), -1)  # Initialize nb_turns with infinity
         predecessors = -1 * np.ones((rows, cols, 2), dtype=int)  # Initialize predecessors with -1
         visited = np.zeros((rows, cols), dtype=bool)
 
@@ -165,6 +166,7 @@ class DijkstraNavigation:
 
         # Starting point
         distances[(start[1], start[0])] = 0
+        nb_turns[(start[1], start[0])] = 0
         priority_queue.put((0, start))
 
         while not priority_queue.empty():
@@ -190,10 +192,18 @@ class DijkstraNavigation:
 
                         new_distance = distances[y, x] + cost
 
-                        if new_distance < distances[neighbor_y, neighbor_x] or distances[neighbor_y, neighbor_x] == -1:
-                            distances[neighbor_y, neighbor_x] = new_distance
-                            predecessors[neighbor_y, neighbor_x] = np.array([y, x])
-                            priority_queue.put((new_distance, (neighbor_x, neighbor_y)))
+                        if new_distance <= distances[neighbor_y, neighbor_x] or distances[neighbor_y, neighbor_x] == -1:
+                            dir = np.subtract((neighbor_y, neighbor_x), (y, x))
+
+                            curr_nb_turns = nb_turns[y, x]
+                            if not np.array_equal(dir, np.subtract((y, x), predecessors[y, x])):
+                                curr_nb_turns += 1
+
+                            if curr_nb_turns < nb_turns[neighbor_y, neighbor_x] or nb_turns[neighbor_y, neighbor_x] == -1:
+                                distances[neighbor_y, neighbor_x] = new_distance
+                                predecessors[neighbor_y, neighbor_x] = np.array([y, x])
+                                priority_queue.put((new_distance, (neighbor_x, neighbor_y)))
+                                nb_turns[neighbor_y, neighbor_x] = curr_nb_turns
 
         # Reconstruct path
         path = []
@@ -307,8 +317,8 @@ async def main():
     aw(node.set_variables(motion_control.motors(0, 0)))
 
     # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_image.png')
-    # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_obstacles_cut_out.png')
-    dijkstra = DijkstraNavigation(load_from_file=None)
+    dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_obstacles_cut_out.png')
+    # dijkstra = DijkstraNavigation(load_from_file=None)
 
     path = dijkstra.compute_dijkstra_path()
 
@@ -382,5 +392,97 @@ async def main():
         dijkstra.map.update_kalman_filter(speed_left_wheel=left_wheel_speed, speed_right_wheel=right_wheel_speed)
 
 
+def main_without_thymio():
+    print("initializing")
+
+    # Client = ClientAsync()
+    # node = aw(Client.wait_for_node())
+    # aw(node.lock())
+
+    # motion_control = Motion(node)
+
+    # aw(node.set_variables(motion_control.motors(0, 0)))
+
+    # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_image.png')
+    dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_obstacles_cut_out.png')
+    # dijkstra = DijkstraNavigation(load_from_file=None)
+
+    path = dijkstra.compute_dijkstra_path()
+
+    print(path)
+
+    direction_changes = dijkstra._find_direction_changes()
+
+    print(direction_changes)
+
+    local_navigation = LocalNavigation()
+
+    while True:
+
+        # local navigation check
+        if (local_navigation.danger_state != 0):
+            thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
+            thymio_location = dijkstra.map.get_kalman_thymio_location()
+
+            dijkstra.find_closest_cell_on_path(thymio_location)
+
+            # TODO: Marc
+            local_navigation.danger_navigation(thymio_direction, wanted_path_direction, thymio_location)
+
+            # TODO: Luca
+            dijkstra.handle_local_navigation_exit()
+
+        dijkstra.update_navigation()
+
+        dijkstra.display_grid_as_image()
+        dijkstra.display_feed()
+
+        thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
+        thymio_location = dijkstra.map.get_kalman_thymio_location()
+
+        position = 1
+
+        if dijkstra.has_thymio_reached_goal():
+
+            aw(node.set_variables(motion_control.motors(0, 0)))
+            while True:
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+            position = 0
+            print("Reached goal!")
+
+        thymio_angle = rotation_nextpoint(thymio_direction)
+        if thymio_angle < 0:
+            thymio_angle = 360 + thymio_angle
+
+        wanted_angle = rotation_nextpoint(wanted_path_direction)
+        if wanted_angle < 0:
+            wanted_angle = 360 + wanted_angle
+
+        change_idx = dijkstra._next_direction_change_idx
+        # left_speed, right_speed = motion_control.pi_regulation(actual_angle=thymio_angle, wanted_angle=wanted_angle,
+        #                                                        position=position, change_idx=change_idx)
+
+        # aw(node.set_variables(motion_control.motors(left_speed, right_speed)))
+        # aw(node.wait_for_variables())
+        # left_wheel_speed = node["motor.left.speed"]
+        # right_wheel_speed = node["motor.right.speed"]
+
+        # print("Actual speed:", "left", left_wheel_speed, "right", right_wheel_speed)
+
+        # if cv2.waitKey(1) & 0xFF == ord('s'):
+        #     aw(node.set_variables(motion_control.motors(0, 0)))
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+        # dijkstra.map.update_kalman_filter(speed_left_wheel=left_wheel_speed, speed_right_wheel=right_wheel_speed)
+
+
 if __name__ == "__main__":
-    ClientAsync.run_async_program(main)
+    # ClientAsync.run_async_program(main)
+
+    main_without_thymio()
+
+
+
