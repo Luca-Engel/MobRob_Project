@@ -11,9 +11,7 @@ from thymio.LocalNavigation import LocalNavigation
 
 from queue import PriorityQueue
 
-
-
-KIDNAP_MIN_DISTANCE = 15
+KIDNAP_MIN_DISTANCE = 8
 
 
 class DijkstraNavigation:
@@ -22,11 +20,11 @@ class DijkstraNavigation:
         self.path = []
         # self.start = self.map.get_thymio_grid_coordinates()
         # self.goal = self.map.get_goal_grid_coordinates()
-        print("Start: ", self.map.get_thymio_location())
-        self.start = self.map.get_thymio_location()
+        print("Start: ", self.map.get_kalman_thymio_location())
+        self.start = self.map.get_kalman_thymio_location()
         self.goal = self.map.get_goal_location()
         self.is_path_up_to_date = False
-        self._last_known_thymio_location = self.map.get_thymio_location()
+        self._last_known_thymio_location = self.map.get_kalman_thymio_location()
         self._last_known_goal_location = self.map.get_goal_location()
         self._next_direction_change_idx = 0
         # contains the cell where the thymio was last before going into local navigation
@@ -39,10 +37,12 @@ class DijkstraNavigation:
         if not self._has_goal_been_kidnapped() and not self._has_thymio_been_kidnapped():
             return None
 
-        self.start = self.map.get_thymio_location()
+        self.map.kalman_filter.set_thymio_kidnap_location(self.map.get_camera_thymio_location_est())
+
+        self.start = self.map.get_kalman_thymio_location()
         self.goal = self.map.get_goal_location()
         self._last_known_goal_location = self.map.get_goal_location()
-        self._last_known_thymio_location = self.map.get_thymio_location()
+        self._last_known_thymio_location = self.map.get_kalman_thymio_location()
         self._next_direction_change_idx = 0
 
         path = self.compute_dijkstra_path()
@@ -69,11 +69,17 @@ class DijkstraNavigation:
         Checks if the Thymio has been kidnapped
         :return: True if the Thymio has been kidnapped, False otherwise
         """
+        # last_thymio_location = np.array(self._last_known_thymio_location)
+        # current_thymio_location = np.array(self.map.get_kalman_thymio_location())
         last_thymio_location = np.array(self._last_known_thymio_location)
-        current_thymio_location = np.array(self.map.get_thymio_location())
+        current_thymio_location = np.array(self.map.get_camera_thymio_location_est())
+
+        print("------")
+        print("last_thymio_location:", last_thymio_location)
+        print("current_thymio_location:", current_thymio_location)
 
         distance = np.linalg.norm(last_thymio_location - current_thymio_location)
-        self._last_known_thymio_location = current_thymio_location
+        self._last_known_thymio_location = current_thymio_location  # is this line needed???
         # if distance > 10:
         #     print("Distance thymio: ", distance)
 
@@ -109,12 +115,14 @@ class DijkstraNavigation:
         Returns the normalized thymio direction and the wanted path direction vectors
         :return: (thymio_direction, wanted_path_direction) where thymio_direction is the direction the Thymio is facing and wanted_path_direction is the direction the path intends for the Thymio to go
         """
-        thymio_location = np.array(self.map.get_thymio_location())
-        thymio_direction = np.array(self.map.get_thymio_direction())
+        thymio_location = np.array(self.map.get_kalman_thymio_location())
+        thymio_direction = np.array(self.map.get_kalman_thymio_direction())
+        print("thymio_location___:", thymio_location)
+        print("thymio_direction___:", thymio_direction)
         path = self.map.get_path()
         direction_changes = self.map.direction_changes
 
-        if (direction_changes is None or self._next_direction_change_idx >= len(direction_changes)):
+        if direction_changes is None or self._next_direction_change_idx >= len(direction_changes):
             return (0, 0), (0, 0)
 
         wanted_path_direction = np.subtract(direction_changes[self._next_direction_change_idx], thymio_location)
@@ -123,7 +131,7 @@ class DijkstraNavigation:
         img = cv2.arrowedLine(self.map.grid_image, tuple(thymio_location),
                               tuple(np.add(thymio_location, 10 * wanted_path_direction)), (0, 0, 0), 2)
         img = cv2.arrowedLine(img, tuple(thymio_location),
-                              tuple(np.add(thymio_location, tuple(map(int, thymio_direction)))), (0, 255, 0), 2)
+                              tuple(np.add(thymio_location, tuple(map(int, 10 * thymio_direction)))), (0, 255, 0), 2)
         cv2.imshow("direction", img)
 
         normalized_thymio_direction = thymio_direction / np.linalg.norm(thymio_direction)
@@ -135,7 +143,7 @@ class DijkstraNavigation:
         Returns the direction the Thymio is facing
         :return: The direction the Thymio is facing
         """
-        return self.map.get_thymio_direction()
+        return self.map.get_kalman_thymio_direction()
 
     def compute_dijkstra_path(self):
         """
@@ -235,7 +243,7 @@ class DijkstraNavigation:
         Updates the current path direction index
         :return: None
         """
-        thymio_location = np.array(self.map.get_thymio_location())
+        thymio_location = np.array(self.map.get_kalman_thymio_location())
         direction_changes = self.map.direction_changes
 
         if direction_changes is None or self._next_direction_change_idx >= len(direction_changes):
@@ -253,7 +261,7 @@ class DijkstraNavigation:
         Checks if the Thymio has reached the goal
         :return: True if the Thymio has reached the goal, False otherwise
         """
-        thymio_location = np.array(self.map.get_thymio_location())
+        thymio_location = np.array(self.map.get_kalman_thymio_location())
         goal_location = np.array(self.map.get_goal_location())
 
         distance = np.linalg.norm(thymio_location - goal_location)
@@ -274,7 +282,6 @@ class DijkstraNavigation:
         """
         self.map.display_feed()
 
-
     def find_closest_cell_on_path(self, thymio_location):
         """
         Finds the closest cell on the path and stores it in the map instance
@@ -286,7 +293,6 @@ class DijkstraNavigation:
     def handle_local_navigation_exit(self):
         # TODO
         return 0
-
 
 
 async def main():
@@ -319,7 +325,7 @@ async def main():
         # local navigation check
         if (local_navigation.danger_state != 0):
             thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
-            thymio_location = dijkstra.map.get_thymio_location()
+            thymio_location = dijkstra.map.get_kalman_thymio_location()
 
             dijkstra.find_closest_cell_on_path(thymio_location)
 
@@ -335,7 +341,7 @@ async def main():
         dijkstra.display_feed()
 
         thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
-        thymio_location = dijkstra.map.get_thymio_location()
+        thymio_location = dijkstra.map.get_kalman_thymio_location()
 
         position = 1
 
@@ -372,7 +378,6 @@ async def main():
             aw(node.set_variables(motion_control.motors(0, 0)))
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
 
         dijkstra.map.update_kalman_filter(speed_left_wheel=left_wheel_speed, speed_right_wheel=right_wheel_speed)
 
