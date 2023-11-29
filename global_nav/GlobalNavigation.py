@@ -74,8 +74,8 @@ class DijkstraNavigation:
 
         distance = np.linalg.norm(last_thymio_location - current_thymio_location)
         self._last_known_thymio_location = current_thymio_location
-        if distance > 10:
-            print("Distance thymio: ", distance)
+        # if distance > 10:
+        #     print("Distance thymio: ", distance)
 
         return distance > KIDNAP_MIN_DISTANCE
 
@@ -143,6 +143,7 @@ class DijkstraNavigation:
         :return: The shortest path from the start to the goal
         """
         grid = self.map.get_grid()
+        self.start = tuple(map(int, self.start))
         start = self.start
         goal = self.goal
 

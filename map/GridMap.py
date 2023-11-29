@@ -6,7 +6,8 @@ import numpy as np
 from aruco.marker_recognition import ArUcoMarkerDetector
 from opencv.object_recognition import ObjectDetector
 from opencv.webcam_input import WebcamFeed
-from filtering.KalmanFilter import KalmanFilter
+# from filtering.KalmanFilter import KalmanFilter
+from filtering.KalmanFilterLibrary import ThymioKalmanFilter
 
 # MIN NORM DISTANCE TO CELL TO BE CONSIDERED AS ATTAINED
 CELL_ATTAINED_DISTANCE = 2
@@ -75,7 +76,8 @@ class GridMap:
         x, y = self._convert_to_centroid_grid_indices(corners_for_thymio, len(binary_image[0]), len(binary_image))
         # direction = corners_for_thymio[0] - corners_for_thymio[3]
 
-        self.kalman_filter = KalmanFilter(np.array([x, y]))
+        # self.kalman_filter = KalmanFilter(np.array([x, y]))
+        self.kalman_filter = ThymioKalmanFilter(np.array([x, y]))
 
         while True:
             if cv2.waitKey(1) & 0xFF == ord('b'):

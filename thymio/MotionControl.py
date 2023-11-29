@@ -60,16 +60,16 @@ class Motion:
             self.change_idx = -1
             position = 2
 
-        print(f"actual angle {actual_angle}")
-        print(f"desired angle {self.desired_angle}")
-        print(f"position {position}")
+        # print(f"actual angle {actual_angle}")
+        # print(f"desired angle {self.desired_angle}")
+        # print(f"position {position}")
 
         # Position at 1 means that the robot is achieving the next point
         if position == 1:
             left_speed = 0
             right_speed = 0
             if actual_angle <= abs(self.desired_angle + self.threshold_angle):
-                print("111")
+                # print("111")
                 left_speed = self.normal_speed
                 right_speed = self.normal_speed
 
@@ -77,40 +77,40 @@ class Motion:
                 self.sum_error = 0
 
             elif actual_angle < (self.desired_angle - self.threshold_angle):
-                print("222")
+                # print("222")
                 self.error = abs(actual_angle - self.desired_angle)
                 self.sum_error += self.error
 
-                print("error", self.error)
+                # print("error", self.error)
                 if self.sum_error < self.max_sum_error:
-                    print("444")
+                    # print("444")
                     left_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.sum_error)
                     right_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.sum_error)
 
                 else:
-                    print("555")
+                    # print("555")
                     left_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.max_sum_error)
                     right_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.max_sum_error)
 
             elif actual_angle > (self.desired_angle + self.threshold_angle):
-                print("333")
+                # print("333")
                 self.error = abs(actual_angle - self.desired_angle)
                 self.sum_error += self.error
 
-                print("error", self.error)
+                # print("error", self.error)
 
                 if self.sum_error < self.max_sum_error:
-                    print("444")
+                    # print("444")
                     left_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.sum_error)
                     right_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.sum_error)
 
                 else:
-                    print("555")
+                    # print("555")
                     left_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.max_sum_error)
                     right_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.max_sum_error)
 
-            print("left_speed", left_speed)
-            print("right_speed", right_speed)
+            # print("left_speed", left_speed)
+            # print("right_speed", right_speed)
             return left_speed, right_speed
         # Position at 2 means that the robot need to rotate to face the next point
         elif position == 2:
@@ -120,16 +120,16 @@ class Motion:
             # if self.error > 180:
             #     self.error = 360 - self.error
 
-            print("error", self.error)
+            # print("error", self.error)
 
             if self.error >= 0:
-                print("case 1")
+                # print("case 1")
                 left_speed = self.normal_speed
                 right_speed = -self.normal_speed
                 return left_speed, right_speed
 
             if self.error < 0:
-                print("case 2")
+                # print("case 2")
                 left_speed = -self.normal_speed
                 right_speed = self.normal_speed
                 return left_speed, right_speed
