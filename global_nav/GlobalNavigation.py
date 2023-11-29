@@ -167,6 +167,7 @@ class DijkstraNavigation:
         # Starting point
         distances[(start[1], start[0])] = 0
         nb_turns[(start[1], start[0])] = 0
+        predecessors[(start[1], start[0])] = np.array((start[1], start[0]))
         priority_queue.put((0, start))
 
         while not priority_queue.empty():
@@ -208,10 +209,12 @@ class DijkstraNavigation:
         # Reconstruct path
         path = []
         current = (goal[1], goal[0])
-        while not np.array_equal(current, np.array([-1, -1])):
+        while not np.array_equal(current, (start[1], start[0])):#np.array([-1, -1])):
             y, x = current  # divmod(current, cols)
             path.append((x, y))
             current = predecessors[y, x]
+
+        print("nb_turns: ", nb_turns[goal[1], goal[0]])
 
         path.reverse()  # Reverse the path to start from the beginning
         self.path = path
@@ -480,9 +483,8 @@ def main_without_thymio():
 
 
 if __name__ == "__main__":
-    # ClientAsync.run_async_program(main)
-
-    main_without_thymio()
+    ClientAsync.run_async_program(main)
+    # main_without_thymio()
 
 
 
