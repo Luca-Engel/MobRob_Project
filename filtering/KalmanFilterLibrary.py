@@ -4,15 +4,22 @@ from filterpy.kalman import KalmanFilter
 
 
 class ThymioKalmanFilter:
-    def __init__(self, position_thymio_camera_est):
+    def __init__(self, position_thymio_camera_est, direction_thymio_camera_est):
         self.kf = KalmanFilter(dim_x=3, dim_z=2)
 
+        dir_x, dir_y = direction_thymio_camera_est
+        angle = math.atan2(dir_y, dir_x)
+        if angle < 0:
+            angle += 2 * math.pi
+
+        print("angle", angle)
         # Initial state (x, y, angle)
-        self.kf.x = np.array([position_thymio_camera_est[0], position_thymio_camera_est[1], 0.0])
+        self.kf.x = np.array([position_thymio_camera_est[0], position_thymio_camera_est[1], angle])
 
         print("initial x", self.kf.x)
 
         # State transition matrix
+        # first line is for x, second for y, third for angle
         self.kf.F = np.array([[1, 0, 0],
                               [0, 1, 0],
                               [0, 0, 1]])
@@ -47,8 +54,6 @@ class ThymioKalmanFilter:
             # Translation with rotation
             self.kf.F[0, 2] = v * math.cos(self.kf.x[2]) * dt
             self.kf.F[1, 2] = v * math.sin(self.kf.x[2]) * dt
-        # self.kf.F[0, 2] = v * math.cos(self.kf.x[2]) * dt
-        # self.kf.F[1, 2] = v * math.sin(self.kf.x[2]) * dt
 
         # Update the direction estimation based on camera estimation and wheel speed difference
         direction_angle = math.atan2(direction_camera_est[1], direction_camera_est[0])  # - self.kf.x[2]
