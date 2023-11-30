@@ -164,11 +164,11 @@ class ThymioKalmanFilter:
 
 
         # TODO: check if this is correct and fix it!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        if keep_old_angle:
-            old_dir_x, old_dir_y = self._direction_est_for_angle(old_angle)
-            self._initialize_kalman_filter(self.kf.x[0:2], np.array([old_dir_x, old_dir_y]))
-            self.kf.x[2] = old_angle
-            print("keep old angle", old_angle)
+        # if keep_old_angle:
+        #     old_dir_x, old_dir_y = self._direction_est_for_angle(old_angle)
+        #     self._initialize_kalman_filter(self.kf.x[0:2], np.array([old_dir_x, old_dir_y]))
+        #     self.kf.x[2] = old_angle
+        #     print("keep old angle", old_angle)
 
 
         print("vectors:")
