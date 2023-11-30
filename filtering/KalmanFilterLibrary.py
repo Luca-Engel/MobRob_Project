@@ -5,6 +5,8 @@ from filterpy.kalman import KalmanFilter
 # seconds for 100 and -100 speed to make a 360 turn
 MIN_THYMIO_360_TURN_PERIOD = 9
 
+DT = 0.25
+
 
 class ThymioKalmanFilter:
     def __init__(self, position_thymio_camera_est, direction_thymio_camera_est):
@@ -62,9 +64,9 @@ class ThymioKalmanFilter:
         scaled_right_wheel_speed = right_wheel_speed * 0.0002
 
         # Update the state transition matrix based on wheel speeds
-        dt = 0.2  # Time step (you may need to adjust this based on your system)
-        v = (scaled_left_wheel_speed + scaled_right_wheel_speed) / 2.0
-        # v = (left_wheel_speed + right_wheel_speed) / 2.0
+        # v = (scaled_left_wheel_speed + scaled_right_wheel_speed) / 2.0
+        v = (left_wheel_speed + right_wheel_speed) / 2.0
+
         w = (right_wheel_speed - left_wheel_speed) / 0.2  # Assuming wheelbase of 0.2 (you may need to adjust this)
 
         right_wheel_speed = max(min(right_wheel_speed, 100), -100)
@@ -79,7 +81,7 @@ class ThymioKalmanFilter:
             w = 2 * np.pi / period
 
 
-        self.kf.F[2, 3] = w # * 0.1 #dt  # becomes theta_k+1 = theta_k + w * dt
+        self.kf.F[2, 3] = w # * 0.1 #DT  # becomes theta_k+1 = theta_k + w * DT
 
         old_angle = self.kf.x[2]
         keep_old_angle = False
@@ -87,14 +89,14 @@ class ThymioKalmanFilter:
             keep_old_angle = True
 
         if abs(v) < 20:
-            # Pure rotation without translation
-            # TODO: probably need to change this to something with v
+            # Pure rotation without translation, i.e., the thymio is not moving forward or backward
+            # --> keep the postion the same
             self.kf.F[0, 3] = 1
             self.kf.F[1, 3] = 1
         else:
             # Translation with rotation
-            self.kf.F[0, 3] = v * math.cos(self.kf.x[2]) * 0.25 # dt   # becomes x_k+1 = x_k + v * cos(theta) * dt
-            self.kf.F[1, 3] = v * math.sin(self.kf.x[2]) * 0.25 # dt   # becomes y_k+1 = y_k + v * sin(theta) * dt
+            self.kf.F[0, 3] = v * math.cos(self.kf.x[2]) * DT # becomes x_k+1 = x_k + v * cos(theta) * DT
+            self.kf.F[1, 3] = v * math.sin(self.kf.x[2]) * DT # becomes y_k+1 = y_k + v * sin(theta) * DT
 
         # update last element of x to guarantee that it is always 1
         self.kf.x[3] = 1
