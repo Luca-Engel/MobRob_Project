@@ -30,26 +30,6 @@ class ThymioKalmanFilter:
                               [0, 0.001, 0],
                               [0, 0, 0.001]])
 
-    # def update(self, position_camera_est, direction_camera_est, left_wheel_speed, right_wheel_speed):
-    #     left_wheel_speed = left_wheel_speed / 10000.0
-    #     right_wheel_speed = right_wheel_speed / 10000.0
-    #
-    #     # Update the state transition matrix based on wheel speeds
-    #     dt = 1.0  # Time step (you may need to adjust this based on your system)
-    #     v = (left_wheel_speed + right_wheel_speed) / 2.0
-    #     w = (right_wheel_speed - left_wheel_speed) / 0.2  # Assuming wheelbase of 0.2 (you may need to adjust this)
-    #
-    #     self.kf.F[0, 2] = v * math.cos(self.kf.x[2]) * dt
-    #     self.kf.F[1, 2] = v * math.sin(self.kf.x[2]) * dt
-    #
-    #     # Predict the next state
-    #     self.kf.predict()
-    #
-    #     # Update the measurement based on the camera estimation
-    #     self.kf.update(np.array([position_camera_est[0], position_camera_est[1]]))
-    #
-    #     print("updated x", self.kf.x)
-
     def update(self, position_camera_est, direction_camera_est, left_wheel_speed, right_wheel_speed):
         left_wheel_speed = left_wheel_speed * 0.0002
         right_wheel_speed = right_wheel_speed * 0.0002
@@ -61,8 +41,8 @@ class ThymioKalmanFilter:
 
         if abs(v) < 20:
             # Pure rotation without translation
-            self.kf.F[0, 2] = -w * math.sin(self.kf.x[2]) * dt
-            self.kf.F[1, 2] = w * math.cos(self.kf.x[2]) * dt
+            self.kf.F[0, 2] = 1 # -w * math.sin(self.kf.x[2]) * dt
+            self.kf.F[1, 2] = 1 # w * math.cos(self.kf.x[2]) * dt
         else:
             # Translation with rotation
             self.kf.F[0, 2] = v * math.cos(self.kf.x[2]) * dt

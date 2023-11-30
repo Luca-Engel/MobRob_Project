@@ -202,7 +202,7 @@ class DijkstraNavigation:
 
                             curr_nb_turns = nb_turns[y, x]
                             if not np.array_equal(dir, np.subtract((y, x), predecessors[y, x])):
-                                curr_nb_turns += 1
+                                curr_nb_turns += 0.1
 
                             if curr_nb_turns < nb_turns[neighbor_y, neighbor_x] or nb_turns[neighbor_y, neighbor_x] == -1:
                                 distances[neighbor_y, neighbor_x] = new_distance
@@ -323,6 +323,12 @@ async def main():
 
     aw(node.set_variables(motion_control.motors(0, 0)))
 
+    # aw(node.set_variables({
+    #     "leds.prox.h": [0, 0, 0, 0, 0, 0, 0],
+    #     "leds.prox.v": (0, 0),
+    #     "leds.bottom.left": (0, 0, 0),
+    #     # Add more LED variables if needed
+    # }))
     # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_image.png')
     # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_obstacles_cut_out.png')
     dijkstra = DijkstraNavigation(load_from_file=None)
@@ -367,6 +373,7 @@ async def main():
             aw(node.set_variables(motion_control.motors(0, 0)))
             while True:
                 if cv2.waitKey(1) & 0xFF == ord('q'):
+                    aw(node.set_variables(motion_control.motors(0, 0)))
                     break
 
             position = 0
@@ -394,6 +401,7 @@ async def main():
         if cv2.waitKey(1) & 0xFF == ord('s'):
             aw(node.set_variables(motion_control.motors(0, 0)))
         if cv2.waitKey(1) & 0xFF == ord('q'):
+            aw(node.set_variables(motion_control.motors(0, 0)))
             break
 
         dijkstra.map.update_kalman_filter(speed_left_wheel=left_wheel_speed, speed_right_wheel=right_wheel_speed)
