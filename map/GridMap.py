@@ -396,6 +396,7 @@ class GridMap:
         :return: None
         """
         if self._grid_image_is_up_to_date:
+            z = 0
             # cv2.imshow("grid map", self.grid_image)
         else:
             self._compute_grid_image()
@@ -525,7 +526,7 @@ class GridMap:
         # normalized_direction = direction / np.linalg.norm(direction)
         # self._thymio_direction = normalized_direction
 
-    def _get_camera_thymio_direction_est(self):
+    def get_camera_thymio_direction_est(self):
         if self._thymio_corners is None:
             # throw exception:
             raise Exception("Thymio location not found")
@@ -609,7 +610,7 @@ class GridMap:
         :return: None
         """
         thymio_location = self.get_camera_thymio_location_est()
-        thymio_direction = self._get_camera_thymio_direction_est()
+        thymio_direction = self.get_camera_thymio_direction_est()
 
         self.kalman_filter.update(position_camera_est=thymio_location,
                                   direction_camera_est=thymio_direction,

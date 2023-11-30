@@ -38,7 +38,7 @@ class DijkstraNavigation:
         if not self._has_goal_been_kidnapped() and not self._has_thymio_been_kidnapped():
             return None
 
-        self.map.kalman_filter.set_thymio_kidnap_location(self.map.get_camera_thymio_location_est())
+        self.map.kalman_filter.set_thymio_kidnap_location(self.map.get_camera_thymio_location_est(), self.map.get_camera_thymio_direction_est())
 
         self.start = self.map.get_kalman_thymio_location()
         self.goal = self.map.get_goal_location()
