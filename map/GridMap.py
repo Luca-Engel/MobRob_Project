@@ -69,21 +69,27 @@ class GridMap:
         self._image_feed_width = None
         self._image_feed_height = None
 
-        contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
-        # print("corners", corners)
-        print("corners shape", corners.shape)
+        while True:
+            contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
+
+
+            if len(ids) >= 6 and self._thymio_marker_id in ids and self._goal_marker_id in ids:
+                cv2.destroyAllWindows()
+                break
+
+            cv2.imshow("Not all markers detected (4 corners, thymio, goal)", frame_with_objects)
+
         corners_for_thymio = corners[np.where(ids == self._thymio_marker_id)[0]][0][0]
-        print("corners_for_thymio", corners_for_thymio.shape)
         x, y = self._convert_to_centroid_grid_indices(corners_for_thymio, len(binary_image[0]), len(binary_image))
         direction = corners_for_thymio[0] - corners_for_thymio[3]
 
-        # self.kalman_filter = KalmanFilter(np.array([x, y]))
         self.kalman_filter = ThymioKalmanFilter(np.array([x, y]), direction)
         self._thymio_kalman_location = np.array([x, y])
         self._prev_thymio_kalman_location = np.array([x, y])
 
         while True:
             if cv2.waitKey(1) & 0xFF == ord('b'):
+                cv2.destroyAllWindows()
                 break
             cv2.imshow("Press b to initialize Map", self._webcam.single_capture_and_display())
 
