@@ -51,42 +51,40 @@ class ThymioKalmanFilter:
     #     print("updated x", self.kf.x)
 
     def update(self, position_camera_est, direction_camera_est, left_wheel_speed, right_wheel_speed):
-        left_wheel_speed = left_wheel_speed / 10000.0
-        right_wheel_speed = right_wheel_speed / 10000.0
+        left_wheel_speed = left_wheel_speed * 0.0002
+        right_wheel_speed = right_wheel_speed * 0.0002
 
         # Update the state transition matrix based on wheel speeds
-        dt = 1.0  # Time step (you may need to adjust this based on your system)
+        dt = 0.2  # Time step (you may need to adjust this based on your system)
         v = (left_wheel_speed + right_wheel_speed) / 2.0
         w = (right_wheel_speed - left_wheel_speed) / 0.2  # Assuming wheelbase of 0.2 (you may need to adjust this)
 
-        self.kf.F[0, 2] = v * math.cos(self.kf.x[2]) * dt
-        self.kf.F[1, 2] = v * math.sin(self.kf.x[2]) * dt
-
-        # Update the measurement based on the camera estimation
-        # measurement = np.array([position_camera_est[0], position_camera_est[1]])
-        # self.kf.update(measurement)
+        if abs(v) < 20:
+            # Pure rotation without translation
+            self.kf.F[0, 2] = -w * math.sin(self.kf.x[2]) * dt
+            self.kf.F[1, 2] = w * math.cos(self.kf.x[2]) * dt
+        else:
+            # Translation with rotation
+            self.kf.F[0, 2] = v * math.cos(self.kf.x[2]) * dt
+            self.kf.F[1, 2] = v * math.sin(self.kf.x[2]) * dt
+        # self.kf.F[0, 2] = v * math.cos(self.kf.x[2]) * dt
+        # self.kf.F[1, 2] = v * math.sin(self.kf.x[2]) * dt
 
         # Update the direction estimation based on camera estimation and wheel speed difference
-        angle_diff = math.atan2(direction_camera_est[1], direction_camera_est[0])  # - self.kf.x[2]
+        direction_angle = math.atan2(direction_camera_est[1], direction_camera_est[0])  # - self.kf.x[2]
         # angle_diff_wheels = w * dt
-        var_angle_diff = angle_diff - self.kf.x[2]
+        var_angle_diff = direction_angle - self.kf.x[2]
 
-        #
-        # mean_anlge_diff = (angle_diff + angle_diff_wheels) / 2.0
-        mean_anlge_diff = angle_diff  # TODO: adapt to also account for wheel speed
+        mean_anlge_diff = direction_angle  # TODO: adapt to also account for wheel speed
 
         self.kf.x[2] += mean_anlge_diff
 
         self.kf.update(np.array([position_camera_est[0], position_camera_est[1]], var_angle_diff))
-        # self.kf.update(np.array([position_camera_est[0], position_camera_est[1]], mean_anlge_diff))
 
-        print("camera est", position_camera_est, math.atan2(direction_camera_est[1], direction_camera_est[0]))
-        print("updated x", self.kf.x)
-        print("----")
         # Predict the next state
         self.kf.predict()
-        self.kf.x[2] = angle_diff
-        print("updated x_after pred", self.kf.x)
+        self.kf.x[2] = direction_angle
+        # print("updated x_after pred", self.kf.x)
 
     def get_location_est(self):
         return int(self.kf.x[0]), int(self.kf.x[1])

@@ -27,6 +27,7 @@ class DijkstraNavigation:
         self._last_known_thymio_location = self.map.get_kalman_thymio_location()
         self._last_known_goal_location = self.map.get_goal_location()
         self._next_direction_change_idx = 0
+        print("dijkstra initialized")
         # contains the cell where the thymio was last before going into local navigation
 
     def recompute_if_necessary(self):
@@ -45,7 +46,9 @@ class DijkstraNavigation:
         self._last_known_thymio_location = self.map.get_kalman_thymio_location()
         self._next_direction_change_idx = 0
 
+        print("Recomputing path...")
         path = self.compute_dijkstra_path()
+        print("Path recomputed.")
         find_direction_changes = self._find_direction_changes()
         # self.map.set_direction_changes(direction_changes)
         return path
@@ -74,9 +77,7 @@ class DijkstraNavigation:
         last_thymio_location = np.array(self._last_known_thymio_location)
         current_thymio_location = np.array(self.map.get_camera_thymio_location_est())
 
-        print("------")
-        print("last_thymio_location:", last_thymio_location)
-        print("current_thymio_location:", current_thymio_location)
+        # pr rrent_thymio_location:", current_thymio_location)
 
         distance = np.linalg.norm(last_thymio_location - current_thymio_location)
         self._last_known_thymio_location = current_thymio_location  # is this line needed???
@@ -117,8 +118,8 @@ class DijkstraNavigation:
         """
         thymio_location = np.array(self.map.get_kalman_thymio_location())
         thymio_direction = np.array(self.map.get_kalman_thymio_direction())
-        print("thymio_location___:", thymio_location)
-        print("thymio_direction___:", thymio_direction)
+        # print("thymio_location___:", thymio_location)
+        # print("thymio_direction___:", thymio_direction)
         path = self.map.get_path()
         direction_changes = self.map.direction_changes
 
@@ -150,10 +151,13 @@ class DijkstraNavigation:
         Computes the shortest path from the start to the goal using Dijkstra's algorithm
         :return: The shortest path from the start to the goal
         """
+        print("compute path")
         grid = self.map.get_grid()
         self.start = tuple(map(int, self.start))
         start = self.start
         goal = self.goal
+        print("start: ", start)
+        print("goal: ", goal)
 
         rows, cols = grid.shape
         distances = np.full((rows, cols), -1)  # Initialize distances with infinity
@@ -209,7 +213,7 @@ class DijkstraNavigation:
         # Reconstruct path
         path = []
         current = (goal[1], goal[0])
-        while not np.array_equal(current, (start[1], start[0])):#np.array([-1, -1])):
+        while not (np.array_equal(current, (start[1], start[0])) or np.array_equal(current, np.array([-1, -1]))):
             y, x = current  # divmod(current, cols)
             path.append((x, y))
             current = predecessors[y, x]
@@ -320,8 +324,8 @@ async def main():
     aw(node.set_variables(motion_control.motors(0, 0)))
 
     # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_image.png')
-    dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_obstacles_cut_out.png')
-    # dijkstra = DijkstraNavigation(load_from_file=None)
+    # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_obstacles_cut_out.png')
+    dijkstra = DijkstraNavigation(load_from_file=None)
 
     path = dijkstra.compute_dijkstra_path()
 
@@ -385,7 +389,7 @@ async def main():
         left_wheel_speed = node["motor.left.speed"]
         right_wheel_speed = node["motor.right.speed"]
 
-        print("Actual speed:", "left", left_wheel_speed, "right", right_wheel_speed)
+        # print("Actual speed:", "left", left_wheel_speed, "right", right_wheel_speed)
 
         if cv2.waitKey(1) & 0xFF == ord('s'):
             aw(node.set_variables(motion_control.motors(0, 0)))
@@ -409,6 +413,7 @@ def main_without_thymio():
     # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_image.png')
     dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_obstacles_cut_out.png')
     # dijkstra = DijkstraNavigation(load_from_file=None)
+
 
     path = dijkstra.compute_dijkstra_path()
 
@@ -447,7 +452,7 @@ def main_without_thymio():
 
         if dijkstra.has_thymio_reached_goal():
 
-            aw(node.set_variables(motion_control.motors(0, 0)))
+            # aw(node.set_variables(motion_control.motors(0, 0)))
             while True:
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break

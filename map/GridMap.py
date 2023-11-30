@@ -10,7 +10,7 @@ from opencv.webcam_input import WebcamFeed
 from filtering.KalmanFilterLibrary import ThymioKalmanFilter
 
 # MIN NORM DISTANCE TO CELL TO BE CONSIDERED AS ATTAINED
-CELL_ATTAINED_DISTANCE = 2
+CELL_ATTAINED_DISTANCE = 3
 
 # Width/2 of the thymio in grid cells
 THYMIO_HALF_SIZE = 12
@@ -511,11 +511,11 @@ class GridMap:
 
         self._thymio_camera_direction = self._thymio_corners[0][0] - self._thymio_corners[0][3]
         self._thymio_kalman_direction = self.kalman_filter.get_direction_est()
-        print("thymio kalman direction", self._thymio_kalman_direction)
+        # print("thymio kalman direction", self._thymio_kalman_direction)
 
         if self.grid_image is not None:
             # print("thymio camera location self._thymio_direction)
-            print("shapes", np.array(self._thymio_camera_location).shape, np.array(self._thymio_kalman_direction).shape)
+            # print("shapes", np.array(self._thymio_camera_location).shape, np.array(self._thymio_kalman_direction).shape)
             temp_dir_img = cv2.arrowedLine(self.grid_image, self._thymio_camera_location, np.array(self._thymio_camera_location) + np.array(
                 tuple(map(int, 100 * np.array(self._thymio_kalman_direction)))), (255, 0, 0), 2)
 
