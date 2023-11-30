@@ -396,10 +396,10 @@ class GridMap:
         :return: None
         """
         if self._grid_image_is_up_to_date:
-            cv2.imshow("grid map", self.grid_image)
+            # cv2.imshow("grid map", self.grid_image)
         else:
             self._compute_grid_image()
-            cv2.imshow("grid map", self.grid_image)
+            # cv2.imshow("grid map", self.grid_image)
             self._grid_image_is_up_to_date = True
 
         # thymio_location = self.get_thymio_grid_coordinates()

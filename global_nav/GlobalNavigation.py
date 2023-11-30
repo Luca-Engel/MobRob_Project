@@ -133,7 +133,7 @@ class DijkstraNavigation:
                               tuple(np.add(thymio_location, 10 * wanted_path_direction)), (0, 0, 0), 2)
         img = cv2.arrowedLine(img, tuple(thymio_location),
                               tuple(np.add(thymio_location, tuple(map(int, 10 * thymio_direction)))), (0, 255, 0), 2)
-        cv2.imshow("direction", img)
+        # cv2.imshow("direction", img)
 
         normalized_thymio_direction = thymio_direction / np.linalg.norm(thymio_direction)
         normalized_wanted_path_direction = wanted_path_direction / np.linalg.norm(wanted_path_direction)
