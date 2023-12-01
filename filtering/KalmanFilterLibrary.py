@@ -117,7 +117,7 @@ class ThymioKalmanFilter:
             w = - 2 * np.pi / period
 
         # TODO: self.kf.F always only can contain integers --> rounded down --> |w| is almost always < 1
-        self.kf.F[2, 3] = w * 0.1  # * 0.1 #DT  # becomes theta_k+1 = theta_k + w * DT
+        self.kf.F[2, 3] = w * 0.5  # * 0.1 #DT  # becomes theta_k+1 = theta_k + w * DT
 
         if abs(v) < 5:
             # Pure rotation without translation, i.e., the thymio is not moving forward or backward
