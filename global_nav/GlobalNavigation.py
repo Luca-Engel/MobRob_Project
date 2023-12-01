@@ -392,7 +392,7 @@ async def main():
             dijkstra.find_closest_cell_on_path(thymio_location)
 
             # TODO: Marc
-            local_navigation.danger_navigation(thymio_direction, wanted_path_direction, thymio_location)
+            local_navigation.danger_navigation(thymio_direction, direction_changes, dijkstra._next_direction_change_idx)
 
             # TODO: Luca
             dijkstra.handle_local_navigation_exit()
@@ -438,94 +438,6 @@ async def main():
             break
 
         dijkstra.map.update_kalman_filter(speed_left_wheel=left_wheel_speed, speed_right_wheel=right_wheel_speed)
-
-
-def main_without_thymio():
-    print("initializing")
-
-    # Client = ClientAsync()
-    # node = aw(Client.wait_for_node())
-    # aw(node.lock())
-
-    # motion_control = Motion(node)
-
-    # aw(node.set_variables(motion_control.motors(0, 0)))
-
-    # dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_image.png')
-    dijkstra = DijkstraNavigation(load_from_file='../map/images/a1_side_obstacles_cut_out.png')
-    # dijkstra = DijkstraNavigation(load_from_file=None)
-
-
-    path = dijkstra.compute_dijkstra_path()
-
-    print(path)
-
-    direction_changes = dijkstra._find_direction_changes()
-
-    print(direction_changes)
-
-    local_navigation = LocalNavigation()
-
-    while True:
-
-        # local navigation check
-        if (local_navigation.danger_state != 0):
-            thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
-            thymio_location = dijkstra.map.get_kalman_thymio_location()
-
-            dijkstra.find_closest_cell_on_path(thymio_location)
-
-            # TODO: Marc
-            local_navigation.danger_navigation(thymio_direction, wanted_path_direction, thymio_location)
-
-            # TODO: Luca
-            dijkstra.handle_local_navigation_exit()
-
-        dijkstra.update_navigation()
-
-        dijkstra.display_grid_as_image()
-        dijkstra.display_feed()
-
-        thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
-        thymio_location = dijkstra.map.get_kalman_thymio_location()
-
-        position = 1
-
-        if dijkstra.has_thymio_reached_goal():
-
-            # aw(node.set_variables(motion_control.motors(0, 0)))
-            while True:
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-
-            position = 0
-            print("Reached goal!")
-
-        thymio_angle = rotation_nextpoint(thymio_direction)
-        if thymio_angle < 0:
-            thymio_angle = 360 + thymio_angle
-
-        wanted_angle = rotation_nextpoint(wanted_path_direction)
-        if wanted_angle < 0:
-            wanted_angle = 360 + wanted_angle
-
-        change_idx = dijkstra._next_direction_change_idx
-        # left_speed, right_speed = motion_control.pi_regulation(actual_angle=thymio_angle, wanted_angle=wanted_angle,
-        #                                                        position=position, change_idx=change_idx)
-
-        # aw(node.set_variables(motion_control.motors(left_speed, right_speed)))
-        # aw(node.wait_for_variables())
-        # left_wheel_speed = node["motor.left.speed"]
-        # right_wheel_speed = node["motor.right.speed"]
-
-        # print("Actual speed:", "left", left_wheel_speed, "right", right_wheel_speed)
-
-        # if cv2.waitKey(1) & 0xFF == ord('s'):
-        #     aw(node.set_variables(motion_control.motors(0, 0)))
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-        # dijkstra.map.update_kalman_filter(speed_left_wheel=left_wheel_speed, speed_right_wheel=right_wheel_speed)
 
 
 if __name__ == "__main__":

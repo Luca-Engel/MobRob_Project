@@ -2,6 +2,7 @@ from tdmclient import ClientAsync
 from map.GridMap import GridMap
 import enum
 import numpy as np
+import math
 import cv2
 
 # Every time the prox event is generated, the robot go back accordingly
@@ -31,9 +32,11 @@ class DangerState(enum.Enum):
     WARN = 1
     STOP = 2
 
+class LocalNavState(enum.Enum):
+    START = 0
+    ROTATING = 1
+    CIRCLING = 2
 
-Wl = [40, 20, -20, -20, -40]
-Wr = [-40, -20, -20, 20, 40]
 
 class LocalNavigation:
 
@@ -44,8 +47,9 @@ class LocalNavigation:
         self.danger_state = DangerState.SAFE
         self.prev_danger_state = DangerState.SAFE
         self.danger_dir = [DangerState.SAFE]*7
-        self.target_dir = 0 #should express angle of movement, between -180 and 179, positive to the left
+        self.state = LocalNavState.START
 
+    
     def turn(self, dir):
         """
         Call this to turn left with 'l', right with 'r', or back with 'b'
@@ -62,9 +66,10 @@ class LocalNavigation:
 
         return motor_left_target, motor_right_target
 
-    def judge_severity(self, prox_horizontal):
+    
+    async def judge_severity(self, prox_horizontal, node):
         danger_state = DangerState.SAFE
-
+        await node.wait_for_variables()
         print("Value", prox_horizontal[1])
         for i in range(5):
             if (prox_horizontal[i] > SensorThresh.STOP_THRESH):
@@ -78,59 +83,32 @@ class LocalNavigation:
                 self.danger_dir[i] = DangerState.SAFE
         return danger_state
 
-    def danger_navigation(self, thymio_direction, wanted_path_direction, thymio_location):
-        # TODO: Implement this
+    
+    def danger_navigation(self, direction, dir_changes, next_dir_change_idx):
+        turn_dir = self.determine_turn_dir(direction, dir_changes, next_dir_change_idx)
+        motor_left_target, motor_right_target = self.turn(turn_dir)
+
         return 0
 
-
-    def danger_nav(self):
-        # Simple cases, one side is totally safe, the other is not
-        if (self.danger_dir[SensorPos.LEFT_SENSOR] == DangerState.SAFE):
-
-            left_speed, right_speed = self.turn('l')
-
-        elif (self.danger_dir[SensorPos.RIGHT_SENSOR] == DangerState.SAFE):
-            left_speed, right_speed = self.turn('r')
-
-        # Consider target direction, check if it safe to go there
-        # If not, enter backwards mode
-        if (self.target_dir < 0):
-            if (self.danger_dir[SensorPos.RIGHT_SENSOR] < DangerState.STOP):
-                left_speed, right_speed = self.turn('r')
-            else:
-                left_speed, right_speed = self.turn('b')
-
+    def determine_turn_dir(self, direction, dir_changes, next_dir_change_idx):
+        previous_cell = dir_changes[next_dir_change_idx-1]
+        current_cell = dir_changes[next_dir_change_idx]
+        turn_abs_vector = np.subtract(previous_cell, current_cell)
+        turn_vector = np.subtract(direction, turn_abs_vector)
+        turn_degrees = math.atan2(turn_vector[0], turn_vector[1]) / math.pi * 180
+        turn_degrees = turn_degrees%360
+        if turn_degrees > 180:
+            return 'r'
         else:
-            if (self.danger_dir[SensorPos.LEFT_SENSOR] < DangerState.STOP):
-                left_speed, right_speed = self.turn('l')
-
-            else:
-                left_speed, right_speed = self.turn('b')
-
-        # Just here for sanity
-        left_speed, right_speed = self.turn('b')
-        return left_speed, right_speed
-
-    def potential_field(self, prox_horizontal, motor_left_target, motor_right_target):
-        # This isn't helping, we need to convert this into a "slightly steer away" if possible
-        # Otherwise, just throw this away, it's not vital, and lower STOP threshold slightly
-        x = prox_horizontal
-
-        y1 = 0
-        y2 = 0
-        for i in range(2):
-            y1 += Wl[i] * x[i] / 200        #contribute to left motor the left sensors
-            y2 += Wr[i+3] * x[i+3] / 200    #contribute to right motor the right sensors
-        motor_left_target = motor_left_target / 2 + y1 - y2
-        motor_right_target = motor_right_target / 2 + y2 - y1
-
-        return motor_left_target, motor_right_target
+            return 'l'
+        
 
     def motors(self, speed_left, speed_right):
         return {
             "motor.left.target": [speed_left], "motor.right.target": [speed_right],
         }
 
+    
     async def run(self):
         # Connecting the thymio
         Client = ClientAsync()
@@ -144,7 +122,7 @@ class LocalNavigation:
             self.prev_danger_state = self.danger_state
             self.danger_state = self.judge_severity(self.prox_horizontal)
             if(self.danger_state != DangerState.SAFE and self.prev_danger_state == DangerState.SAFE):
-                #memorize current goal, set a flag blocking Global Nav
+                # memorize current goal, set a flag blocking Global Nav
                 print("thymio enters unsafe waters")
             if (self.danger_state == DangerState.STOP):  # Override all other nav, thymio needs to turn to safety
 
