@@ -15,6 +15,22 @@ KIDNAP_MIN_DISTANCE = 8
 
 
 class DijkstraNavigation:
+    """
+        Class for computing the shortest path from the start to the goal using Dijkstra's algorithm
+
+        Attributes
+        ----------
+        map : GridMap
+            The map of the environment
+        path : list
+            The shortest path from the start to the goal
+        start : tuple
+            The start location
+        goal : tuple
+            The goal location
+        is_path_up_to_date : bool
+            Whether the path is up to date or not
+    """
     def __init__(self, load_from_file=None):
         self.map = GridMap(load_from_file=load_from_file)
         self.path = []

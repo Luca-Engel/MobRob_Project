@@ -33,9 +33,25 @@ class CellType(enum.Enum):
 
 
 class GridMap:
+    """
+        Class to represent the grid map.
+        The grid map is a 2d array of CellType objects.
+
+        Attributes
+        ----------
+        grid_image : np.array
+            The image of the grid map.
+        path : list of (x, y) tuples
+            The path to follow.
+        direction_changes : list of (x, y) tuples
+            The direction changes in the path.
+    """
     def __init__(self, width=160, height=120, thymio_marker_id=4, goal_marker_id=5, load_from_file=None):
-        self._thymio_camera_direction = None
         self.grid_image = None
+        self.path = None
+        self.direction_changes = None
+
+        self._thymio_camera_direction = None
         self._width = width
         self._height = height
         self._thymio_marker_id = thymio_marker_id
@@ -47,8 +63,6 @@ class GridMap:
         self._thymio_location_prev_grid_value = None
         self._thymio_kalman_direction = None
         self._goal_location = None
-        self.path = None
-        self.direction_changes = None
         self._grid_image_is_up_to_date = False
 
         self._last_known_cell_before_danger = None
@@ -496,6 +510,10 @@ class GridMap:
         return self._goal_location
 
     def get_camera_thymio_location_est(self):
+        """
+        Returns the camera's thymio location estimate in grid coordinates
+        :return: (x, y) tuple
+        """
         if self._thymio_camera_location is None:
             # throw exception:
             # raise Exception("Thymio location not found")
@@ -548,6 +566,10 @@ class GridMap:
         # self._thymio_direction = normalized_direction
 
     def get_camera_thymio_direction_est(self):
+        """
+        Returns the camera's thymio direction estimate in grid coordinates
+        :return: (x, y) tuple
+        """
         if self._thymio_corners is None:
             # throw exception:
             raise Exception("Thymio location not found")
