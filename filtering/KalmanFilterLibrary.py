@@ -119,7 +119,6 @@ class ThymioKalmanFilter:
         if period != 0:
             w = - 2 * np.pi / period
 
-        # TODO: self.kf.F always only can contain integers --> rounded down --> |w| is almost always < 1
         self.kf.F[2, 3] = w * ROTATIONAL_VELOCITY_SCALE_FACTOR  # * 0.1 #DT  # becomes theta_k+1 = theta_k + w * DT
 
         if abs(v) < MAX_VELOCITY_FOR_STATIONARY_CLASSIFICATION:
