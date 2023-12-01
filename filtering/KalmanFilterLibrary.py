@@ -12,15 +12,15 @@ NORMAL_NOISE_COVARIANCE = (
 CAMERA_COVERED_NOISE_COVARIANCE = (
     np.array([[0.2, 0, 0, 0],
               [0, 0.2, 0, 0],
-              [0, 0, 0.2, 0],
+              [0, 0, 0.5, 0],
               [0, 0, 0, 0.1]]))
 
 # seconds for 100 and -100 speed to make a 360 turn
 MIN_THYMIO_360_TURN_PERIOD = 9
 
 DT = 0.1
-SPEED_SCALE_FACTOR = 0.2
-ROTATIONAL_VELOCITY_SCALE_FACTOR = 0.5
+SPEED_SCALE_FACTOR = 0.1 # 0.2 --> if larger, estimated speed gets faster
+ROTATIONAL_VELOCITY_SCALE_FACTOR = 0.25 # 0.5, if larger, estimated rotational velocity gets faster
 MAX_VELOCITY_FOR_STATIONARY_CLASSIFICATION = 5
 
 
