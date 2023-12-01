@@ -68,7 +68,8 @@ class Motion:
         if position == 1:
             left_speed = 0
             right_speed = 0
-            if actual_angle <= abs(self.desired_angle + self.threshold_angle):
+            if (self.desired_angle - self.threshold_angle) <= actual_angle <= (
+                    self.desired_angle + self.threshold_angle):
                 # print("111")
                 left_speed = self.normal_speed
                 right_speed = self.normal_speed
