@@ -97,7 +97,7 @@ class GridMap:
         x, y = self._convert_to_centroid_grid_indices(corners_for_thymio, len(binary_image[0]), len(binary_image))
         direction = corners_for_thymio[0] - corners_for_thymio[3]
 
-        self.kalman_filter = ThymioKalmanFilter(np.array([x, y]), direction)
+        self.kalman_filter = ThymioKalmanFilter(np.array([x, y]), direction, max_map_width=width, max_map_height=height)
         self._thymio_kalman_location = np.array([x, y])
         self._prev_thymio_kalman_location = np.array([x, y])
 
@@ -440,17 +440,36 @@ class GridMap:
         y = int(centroid[1] / video_feed_height * self._height)
         return x, y
 
-    def display_grid_as_image(self):
+    def display_grid_as_image(self, direction_change_idx=None):
         """
         Displays the current grid as an image
         :return: None
         """
-        if self._grid_image_is_up_to_date:
-            cv2.imshow("grid map", self.grid_image)
-        else:
+        image = self.grid_image
+        if not self._grid_image_is_up_to_date:
             self._compute_grid_image()
-            cv2.imshow("grid map", self.grid_image)
+            # cv2.imshow("grid map", self.grid_image)
+            image = self.grid_image
             self._grid_image_is_up_to_date = True
+
+        # draw wanted and actual directions
+        if direction_change_idx is not None and direction_change_idx < len(self.direction_changes):
+            thymio_location = np.array(self.kalman_filter.get_location_est())
+            thymio_direction = tuple(map(int, 10 * np.array(self.kalman_filter.get_direction_est())))
+            wanted_direction = tuple(map(int, (np.array(self.direction_changes[direction_change_idx]) - thymio_location)))
+
+            print("thymio_location", thymio_location)
+            print("thymio_direction", thymio_direction)
+            print("wanted_direction", wanted_direction)
+
+            image = cv2.arrowedLine(image, tuple(thymio_location),
+                                  tuple(np.add(thymio_location, 10 * np.array(thymio_direction))), (255, 0, 0), 2)
+
+            image = cv2.arrowedLine(image, tuple(thymio_location),
+                                  tuple(np.add(thymio_location, 10 * np.array(wanted_direction))), (0, 0, 0), 2)
+
+
+        cv2.imshow("grid map", image)
 
         # thymio_location = self.get_thymio_grid_coordinates()
         # goal_location = self.get_goal_grid_coordinates()
@@ -576,7 +595,7 @@ class GridMap:
                                            np.array(self._thymio_kalman_location) + np.array(
                                                tuple(map(int, 100 * np.array(self._thymio_kalman_direction)))),
                                            (255, 0, 0), 2) # this is color (BGR)
-            cv2.imshow("image with thymio direction", temp_dir_img)
+            # cv2.imshow("image with thymio direction", temp_dir_img)
 
         # direction = self._thymio_corners[0][0] - self._thymio_corners[0][3]
         # normalized_direction = direction / np.linalg.norm(direction)

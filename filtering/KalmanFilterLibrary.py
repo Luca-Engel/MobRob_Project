@@ -39,10 +39,12 @@ class ThymioKalmanFilter:
             would cause a large change in the angle and break the smooth prediction).
     """
 
-    def __init__(self, position_thymio_camera_est, direction_thymio_camera_est):
+    def __init__(self, position_thymio_camera_est, direction_thymio_camera_est, max_map_width, max_map_height):
         self.kf = None
         self.last_temp_direction_angle_camera = None
         self.total_direction_angle_camera = None
+        self.max_map_width = max_map_width
+        self.max_map_height = max_map_height
 
         self._initialize_kalman_filter(position_thymio_camera_est, direction_thymio_camera_est)
 
@@ -100,6 +102,7 @@ class ThymioKalmanFilter:
         :return: None
         """
 
+        # -100 <= v <= 100
         v = (left_wheel_speed + right_wheel_speed) / 2.0
 
         right_wheel_speed = max(min(right_wheel_speed, 100), -100)
@@ -111,17 +114,20 @@ class ThymioKalmanFilter:
                     right_wheel_speed - left_wheel_speed)) * MIN_THYMIO_360_TURN_PERIOD  # positive sense is counterclockwise
         w = 0
         if period != 0:
-            w = 2 * np.pi / period
+            w = - 2 * np.pi / period
 
         # TODO: self.kf.F always only can contain integers --> rounded down --> |w| is almost always < 1
-        self.kf.F[2, 3] = w  # * 0.1 #DT  # becomes theta_k+1 = theta_k + w * DT
+        self.kf.F[2, 3] = w * 0.1  # * 0.1 #DT  # becomes theta_k+1 = theta_k + w * DT
 
-        if abs(v) < 20:
+        if abs(v) < 5:
             # Pure rotation without translation, i.e., the thymio is not moving forward or backward
             # --> keep the postion the same
-            self.kf.F[0, 3] = 1  # 0.0001 # 1
-            self.kf.F[1, 3] = 1  # 0.0001 # 1
+            self.kf.F[0, 3] = 0 #1  # 0.0001 # 1
+            self.kf.F[1, 3] = 0 #1  # 0.0001 # 1
         else:
+            v = v * 0.2
+            print("v", v)
+
             # Translation with rotation
             print("v * math.cos(self.kf.x[2]) * DT", v * math.cos(self.kf.x[2]) * DT)
             self.kf.F[0, 3] = v * math.cos(self.kf.x[2]) * DT  # * 0.0001  # becomes x_k+1 = x_k + v * cos(theta) * DT
@@ -169,7 +175,12 @@ class ThymioKalmanFilter:
         Get the estimated location of the Thymio.
         :return: tuple of ints (x, y)
         """
-        return int(self.kf.x[0]), int(self.kf.x[1])
+        est_x = int(self.kf.x[0])
+        est_y = int(self.kf.x[1])
+
+        est_x = min(max(est_x, 0), self.max_map_width - 1)
+        est_y = min(max(est_y, 0), self.max_map_height - 1)
+        return est_x, est_y
 
     def get_angle_rad_est(self):
         """

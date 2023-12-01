@@ -322,7 +322,7 @@ class DijkstraNavigation:
         Displays the grid as an image
         :return: None
         """
-        self.map.display_grid_as_image()
+        self.map.display_grid_as_image(self._next_direction_change_idx)
 
     def display_feed(self):
         """
