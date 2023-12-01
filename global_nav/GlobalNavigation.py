@@ -74,10 +74,23 @@ class DijkstraNavigation:
         """
         # last_thymio_location = np.array(self._last_known_thymio_location)
         # current_thymio_location = np.array(self.map.get_kalman_thymio_location())
-        last_thymio_location = np.array(self._last_known_thymio_location)
-        current_thymio_location = np.array(self.map.get_camera_thymio_location_est())
+        last_thymio_location = self._last_known_thymio_location
+        current_thymio_location = self.map.get_camera_thymio_location_est()
+
+        if current_thymio_location is None:
+            return False
+
+        current_thymio_location = np.array(current_thymio_location)
+
+        if last_thymio_location is None:
+            self._last_known_thymio_location = current_thymio_location
+            return False
+
+        last_thymio_location = np.array(last_thymio_location)
 
         # pr rrent_thymio_location:", current_thymio_location)
+        print("last_thymio_location:", last_thymio_location)
+        print("current_thymio_location:", current_thymio_location)
 
         distance = np.linalg.norm(last_thymio_location - current_thymio_location)
         self._last_known_thymio_location = current_thymio_location  # is this line needed???
@@ -136,6 +149,9 @@ class DijkstraNavigation:
         # cv2.imshow("direction", img)
 
         normalized_thymio_direction = thymio_direction / np.linalg.norm(thymio_direction)
+
+        if np.linalg.norm(wanted_path_direction) == 0:
+            return normalized_thymio_direction, (0, 0)
         normalized_wanted_path_direction = wanted_path_direction / np.linalg.norm(wanted_path_direction)
         return normalized_thymio_direction, normalized_wanted_path_direction
 
