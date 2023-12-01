@@ -18,7 +18,10 @@ CAMERA_COVERED_NOISE_COVARIANCE = (
 # seconds for 100 and -100 speed to make a 360 turn
 MIN_THYMIO_360_TURN_PERIOD = 9
 
-DT = 0.1  # 0.25
+DT = 0.1
+SPEED_SCALE_FACTOR = 0.2
+ROTATIONAL_VELOCITY_SCALE_FACTOR = 0.5
+MAX_VELOCITY_FOR_STATIONARY_CLASSIFICATION = 5
 
 
 class ThymioKalmanFilter:
@@ -90,7 +93,7 @@ class ThymioKalmanFilter:
         self.kf.B = np.array([[1, 0, 0, 0],
                               [0, 1, 0, 0],
                               [0, 0, 1, 0],
-                              [0, 0, 0, 1]])  # TODO: check if it needs to be a 3x1 matrix
+                              [0, 0, 0, 1]])
 
     def update(self, position_camera_est, direction_camera_est, left_wheel_speed, right_wheel_speed):
         """
@@ -117,35 +120,25 @@ class ThymioKalmanFilter:
             w = - 2 * np.pi / period
 
         # TODO: self.kf.F always only can contain integers --> rounded down --> |w| is almost always < 1
-        self.kf.F[2, 3] = w * 0.5  # * 0.1 #DT  # becomes theta_k+1 = theta_k + w * DT
+        self.kf.F[2, 3] = w * ROTATIONAL_VELOCITY_SCALE_FACTOR  # * 0.1 #DT  # becomes theta_k+1 = theta_k + w * DT
 
-        if abs(v) < 5:
+        if abs(v) < MAX_VELOCITY_FOR_STATIONARY_CLASSIFICATION:
             # Pure rotation without translation, i.e., the thymio is not moving forward or backward
             # --> keep the postion the same
-            self.kf.F[0, 3] = 0 #1  # 0.0001 # 1
-            self.kf.F[1, 3] = 0 #1  # 0.0001 # 1
+            self.kf.F[0, 3] = 0 # 1  # 0.0001 # 1
+            self.kf.F[1, 3] = 0 # 1  # 0.0001 # 1
         else:
-            v = v * 0.2
-            print("v", v)
-
             # Translation with rotation
-            print("v * math.cos(self.kf.x[2]) * DT", v * math.cos(self.kf.x[2]) * DT)
-            self.kf.F[0, 3] = v * math.cos(self.kf.x[2]) * DT  # * 0.0001  # becomes x_k+1 = x_k + v * cos(theta) * DT
-            self.kf.F[1, 3] = v * math.sin(self.kf.x[2]) * DT  # * 0.0001  # becomes y_k+1 = y_k + v * sin(theta) * DT
+            v = v * SPEED_SCALE_FACTOR
+            self.kf.F[0, 3] = v * math.cos(self.kf.x[2]) * DT  # becomes x_k+1 = x_k + v * cos(theta) * DT
+            self.kf.F[1, 3] = v * math.sin(self.kf.x[2]) * DT  # becomes y_k+1 = y_k + v * sin(theta) * DT
 
         # update last element of x to guarantee that it is always 1
         self.kf.x[3] = 1
 
-        print("self.kf.F", self.kf.F)
-        print("old self.kf.x", self.kf.x)
-
         self.kf.predict()
 
-        # TODO: check how to handle camera being covered!!!!!!!!!!
         if position_camera_est is None or direction_camera_est is None:
-            print("no update..................")
-            print("w", w)
-            print("self.kf.x", self.kf.x)
             return
 
         # Get the angle of the direction vector from the camera's estimation
@@ -167,8 +160,6 @@ class ThymioKalmanFilter:
 
         self.kf.update(np.array(
             [position_camera_est[0], position_camera_est[1], self.total_direction_angle_camera, 1]))
-
-        print("self.kf.x", self.kf.x)
 
     def get_location_est(self):
         """
@@ -216,10 +207,4 @@ class ThymioKalmanFilter:
         :param direction_thymio_camera_est: new estimated direction of the Thymio from the camera
         :return: None
         """
-        # dir_x, dir_y = direction_thymio_camera_est
-        # angle = math.atan2(dir_y, dir_x)
-        # self.kf = KalmanFilter
-        #
-        # self.kf.x = np.array([position_thymio_camera_est[0], position_thymio_camera_est[1], 0.0, 1])
-        # print("kidnap x", self.kf.x)
         self._initialize_kalman_filter(position_thymio_camera_est, direction_thymio_camera_est)
