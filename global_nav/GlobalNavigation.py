@@ -144,8 +144,8 @@ class DijkstraNavigation:
         # draw arrowed line for wanted path direction and actual thymio direction
         img = cv2.arrowedLine(self.map.grid_image, tuple(thymio_location),
                               tuple(np.add(thymio_location, 10 * wanted_path_direction)), (0, 0, 0), 2)
-        img = cv2.arrowedLine(img, tuple(thymio_location),
-                              tuple(np.add(thymio_location, tuple(map(int, 10 * thymio_direction)))), (0, 255, 0), 2)
+        # img = cv2.arrowedLine(img, tuple(thymio_location),
+        #                       tuple(np.add(thymio_location, tuple(map(int, 10 * thymio_direction)))), (0, 255, 0), 2)
         # cv2.imshow("direction", img)
 
         normalized_thymio_direction = thymio_direction / np.linalg.norm(thymio_direction)
@@ -360,11 +360,18 @@ async def main():
     local_navigation = LocalNavigation()
 
     while True:
+        dijkstra.update_navigation()
+
+        dijkstra.display_grid_as_image()
+        dijkstra.display_feed()
+
+        thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
+        thymio_location = dijkstra.map.get_kalman_thymio_location()
 
         # local navigation check
-        if (local_navigation.danger_state != 0):
-            thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
-            thymio_location = dijkstra.map.get_kalman_thymio_location()
+        if local_navigation.danger_state != 0:
+            # thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
+            # thymio_location = dijkstra.map.get_kalman_thymio_location()
 
             dijkstra.find_closest_cell_on_path(thymio_location)
 
@@ -374,13 +381,7 @@ async def main():
             # TODO: Luca
             dijkstra.handle_local_navigation_exit()
 
-        dijkstra.update_navigation()
 
-        dijkstra.display_grid_as_image()
-        dijkstra.display_feed()
-
-        thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
-        thymio_location = dijkstra.map.get_kalman_thymio_location()
 
         position = 1
 

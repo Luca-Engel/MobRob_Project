@@ -539,7 +539,7 @@ class GridMap:
             temp_dir_img = cv2.arrowedLine(self.grid_image, self._thymio_kalman_location,
                                            np.array(self._thymio_kalman_location) + np.array(
                                                tuple(map(int, 100 * np.array(self._thymio_kalman_direction)))),
-                                           (255, 0, 0), 2)
+                                           (255, 0, 0), 2) # this is color (BGR)
 
             cv2.imshow("image with thymio direction", temp_dir_img)
 
