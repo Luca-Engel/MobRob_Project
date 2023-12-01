@@ -2,9 +2,6 @@ import cv2
 from datetime import datetime
 
 
-
-
-
 class WebcamFeed:
     """
         A class to capture and display frames from a webcam.
@@ -20,6 +17,7 @@ class WebcamFeed:
         cap : cv2.VideoCapture
             The VideoCapture object to capture frames from the webcam.
     """
+
     def __init__(self,
                  camera_index: int = 1,
                  cap_show: int = cv2.CAP_DSHOW,
@@ -42,7 +40,6 @@ class WebcamFeed:
         # ...here
 
         self.load_from_file = load_from_file
-
 
         # cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
 
@@ -71,7 +68,6 @@ class WebcamFeed:
             return frame
 
         ret, frame = self.cap.read()
-
 
         if cv2.waitKey(1) & 0xFF == ord('s'):
             print("Saving image...")

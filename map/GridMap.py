@@ -134,7 +134,7 @@ class GridMap:
                         for l in range(-radius, radius + 1):
                             if (0 <= y + k < self._height
                                     and 0 <= x + l < self._width
-                                    and (l) ** 2 + (k) ** 2 <= radius ** 2
+                                    # and l **2 + k **2 <= radius **2
                             ):
                                 # and not (-radius < k < radius and -radius < l < radius)):
                                 if self._grid[y + k, x + l] != CellType.OBJECT:
@@ -331,6 +331,24 @@ class GridMap:
             if self._times_thymio_not_detected > 10:
                 self._thymio_camera_location = None
 
+
+            # TODO: check why this is not called!!!!!
+            # update thymio location if camera does not see it
+            last_location = self._thymio_kalman_location
+            if last_location is not None:
+                self._draw_marker_circle(
+                    self._thymio_location_prev_grid_value,
+                    last_location[0], last_location[1])
+
+            value = CellType.THYMIO
+            x, y = self.kalman_filter.get_location_est()
+            self._thymio_kalman_location = (x, y)
+            self._thymio_location_prev_grid_value = self._grid[y, x]
+            self._draw_marker_circle(value, x, y)
+            self._thymio_kalman_direction = self.kalman_filter.get_direction_est()
+
+            self._grid_image_is_up_to_date = False
+
     def _update_grid_with_object(self, row_pixel, column_pixel, image_width, image_height, value):
         """
         Updates the grid with the given value at the given pixel location
@@ -364,6 +382,7 @@ class GridMap:
 
         # update the last location of the thymio or goal to the last value / FREE, respectively
         if last_location is not None:
+            print("last_location", last_location)
             self._draw_marker_circle(
                 self._thymio_location_prev_grid_value if value == CellType.THYMIO else CellType.FREE,
                 last_location[0], last_location[1])
@@ -427,11 +446,10 @@ class GridMap:
         :return: None
         """
         if self._grid_image_is_up_to_date:
-            z = 0
-            # cv2.imshow("grid map", self.grid_image)
+            cv2.imshow("grid map", self.grid_image)
         else:
             self._compute_grid_image()
-            # cv2.imshow("grid map", self.grid_image)
+            cv2.imshow("grid map", self.grid_image)
             self._grid_image_is_up_to_date = True
 
         # thymio_location = self.get_thymio_grid_coordinates()
@@ -558,7 +576,6 @@ class GridMap:
                                            np.array(self._thymio_kalman_location) + np.array(
                                                tuple(map(int, 100 * np.array(self._thymio_kalman_direction)))),
                                            (255, 0, 0), 2) # this is color (BGR)
-
             cv2.imshow("image with thymio direction", temp_dir_img)
 
         # direction = self._thymio_corners[0][0] - self._thymio_corners[0][3]

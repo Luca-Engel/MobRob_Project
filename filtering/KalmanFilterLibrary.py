@@ -1,11 +1,24 @@
 import numpy as np
+
 import math
 from filterpy.kalman import KalmanFilter
+
+NORMAL_NOISE_COVARIANCE = (
+    np.array([[0.001, 0, 0, 0],
+              [0, 0.001, 0, 0],
+              [0, 0, 1, 0],
+              [0, 0, 0, 0.001]]))
+
+CAMERA_COVERED_NOISE_COVARIANCE = (
+    np.array([[0.2, 0, 0, 0],
+              [0, 0.2, 0, 0],
+              [0, 0, 0.2, 0],
+              [0, 0, 0, 0.1]]))
 
 # seconds for 100 and -100 speed to make a 360 turn
 MIN_THYMIO_360_TURN_PERIOD = 9
 
-DT = 0.25
+DT = 0.1  # 0.25
 
 
 class ThymioKalmanFilter:
@@ -25,6 +38,7 @@ class ThymioKalmanFilter:
             This is used to have a smooth transition and not jump from 360 to 0 degrees or vice versa (as this
             would cause a large change in the angle and break the smooth prediction).
     """
+
     def __init__(self, position_thymio_camera_est, direction_thymio_camera_est):
         self.kf = None
         self.last_temp_direction_angle_camera = None
@@ -53,10 +67,7 @@ class ThymioKalmanFilter:
 
         # State transition matrix
         # first line is for x, second for y, third for angle
-        self.kf.F = np.array([[1, 0, 0, 0],
-                              [0, 1, 0, 0],
-                              [0, 0, 1, 0],
-                              [0, 0, 0, 1]])
+        self.kf.F = np.diag([1.0, 1, 1, 1])  # np.diag(1.0 * np.ones(4))
 
         # Measurement function
         self.kf.H = np.array([[1, 0, 0, 0],
@@ -71,10 +82,7 @@ class ThymioKalmanFilter:
                               [0, 0, 0, 0.1]])
 
         # Process noise covariance
-        self.kf.Q = np.array([[0.001, 0, 0, 0],
-                              [0, 0.001, 0, 0],
-                              [0, 0, 0.1, 0],  # 0.001, 0],
-                              [0, 0, 0, 0.001]])
+        self.kf.Q = NORMAL_NOISE_COVARIANCE
 
         # Control input matrix should account for the position and orientation of the robot
         self.kf.B = np.array([[1, 0, 0, 0],
@@ -105,22 +113,34 @@ class ThymioKalmanFilter:
         if period != 0:
             w = 2 * np.pi / period
 
+        # TODO: self.kf.F always only can contain integers --> rounded down --> |w| is almost always < 1
         self.kf.F[2, 3] = w  # * 0.1 #DT  # becomes theta_k+1 = theta_k + w * DT
 
         if abs(v) < 20:
             # Pure rotation without translation, i.e., the thymio is not moving forward or backward
             # --> keep the postion the same
-            self.kf.F[0, 3] = 1
-            self.kf.F[1, 3] = 1
+            self.kf.F[0, 3] = 1  # 0.0001 # 1
+            self.kf.F[1, 3] = 1  # 0.0001 # 1
         else:
             # Translation with rotation
-            self.kf.F[0, 3] = v * math.cos(self.kf.x[2]) * DT  # becomes x_k+1 = x_k + v * cos(theta) * DT
-            self.kf.F[1, 3] = v * math.sin(self.kf.x[2]) * DT  # becomes y_k+1 = y_k + v * sin(theta) * DT
+            print("v * math.cos(self.kf.x[2]) * DT", v * math.cos(self.kf.x[2]) * DT)
+            self.kf.F[0, 3] = v * math.cos(self.kf.x[2]) * DT  # * 0.0001  # becomes x_k+1 = x_k + v * cos(theta) * DT
+            self.kf.F[1, 3] = v * math.sin(self.kf.x[2]) * DT  # * 0.0001  # becomes y_k+1 = y_k + v * sin(theta) * DT
 
         # update last element of x to guarantee that it is always 1
         self.kf.x[3] = 1
 
+        print("self.kf.F", self.kf.F)
+        print("old self.kf.x", self.kf.x)
+
         self.kf.predict()
+
+        # TODO: check how to handle camera being covered!!!!!!!!!!
+        if position_camera_est is None or direction_camera_est is None:
+            print("no update..................")
+            print("w", w)
+            print("self.kf.x", self.kf.x)
+            return
 
         # Get the angle of the direction vector from the camera's estimation
         direction_angle_camera = math.atan2(direction_camera_est[1], direction_camera_est[0])
@@ -141,6 +161,8 @@ class ThymioKalmanFilter:
 
         self.kf.update(np.array(
             [position_camera_est[0], position_camera_est[1], self.total_direction_angle_camera, 1]))
+
+        print("self.kf.x", self.kf.x)
 
     def get_location_est(self):
         """

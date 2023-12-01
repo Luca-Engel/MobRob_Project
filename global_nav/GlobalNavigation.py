@@ -11,7 +11,7 @@ from thymio.LocalNavigation import LocalNavigation
 
 from queue import PriorityQueue
 
-KIDNAP_MIN_DISTANCE = 8
+KIDNAP_MIN_DISTANCE = 20
 
 
 class DijkstraNavigation:
@@ -105,8 +105,8 @@ class DijkstraNavigation:
         last_thymio_location = np.array(last_thymio_location)
 
         # pr rrent_thymio_location:", current_thymio_location)
-        print("last_thymio_location:", last_thymio_location)
-        print("current_thymio_location:", current_thymio_location)
+        # print("last_thymio_location:", last_thymio_location)
+        # print("current_thymio_location:", current_thymio_location)
 
         distance = np.linalg.norm(last_thymio_location - current_thymio_location)
         self._last_known_thymio_location = current_thymio_location  # is this line needed???
