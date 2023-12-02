@@ -165,9 +165,9 @@ class LocalNavigation:
             forward_speed = 100 - self.speed_offset
             if self.turn_dir == 'l':
                 left_coeff = 1
-                right_coeff = -0.5
+                right_coeff = -0.8
             else:
-                left_coeff = -0.5
+                left_coeff = -0.8
                 right_coeff = 1
             left_speed = forward_speed + left_coeff*self.speed_offset
             right_speed= forward_speed +right_coeff*self.speed_offset

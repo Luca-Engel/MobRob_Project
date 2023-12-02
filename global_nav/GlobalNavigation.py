@@ -116,6 +116,8 @@ class DijkstraNavigation:
         # if distance > 10:
         #     print("Distance thymio: ", distance)
 
+        if distance > KIDNAP_MIN_DISTANCE:
+            print("Thymio has been kidnapped")
         return distance > KIDNAP_MIN_DISTANCE
 
     def _find_direction_changes(self):
@@ -405,9 +407,8 @@ async def main():
             motor_speeds = local_nav.run(thymio_direction, local_nav_direction_changes, local_nav_direction_change_idx,
                                                motor_speeds)
             aw(node.set_variables(motion_control.motors(int(motor_speeds[0]), int(motor_speeds[1]))))
-            if(danger_level == DangerState.SAFE and
-                    (local_nav.circle_counter > 500 or         #Circling too much
-                    (local_nav.circle_counter > 40 and dijkstra.map.check_if_returned_to_path()))):#Back to path
+            if(danger_level != DangerState.STOP and
+                    (local_nav.circle_counter > 40 and dijkstra.map.check_if_returned_to_path())):#Back to path
                 #Done with local nav
                 print("hands off")
                 local_nav.reset_state()
