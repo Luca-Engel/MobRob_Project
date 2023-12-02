@@ -386,11 +386,12 @@ async def main():
         thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
         thymio_location = dijkstra.map.get_kalman_thymio_location()
 
-        dijkstra.find_closest_cell_on_path(thymio_location)
         aw(node.wait_for_variables())
         # print("node updated", node["prox.horizontal"])
         local_nav.update_prox(node["prox.horizontal"])
         danger_level = local_nav.judge_severity()
+        if danger_level == DangerState.SAFE and local_nav.state == LocalNavState.START:
+            dijkstra.find_closest_cell_on_path(thymio_location)#Only compute when Global Nav is active
         if danger_level != DangerState.SAFE or local_nav.state != LocalNavState.START:
             motor_speeds = node["motor.left.target"], node["motor.right.target"]
 
@@ -405,12 +406,14 @@ async def main():
                                                motor_speeds)
             aw(node.set_variables(motion_control.motors(int(motor_speeds[0]), int(motor_speeds[1]))))
             if(danger_level == DangerState.SAFE and
-                    (local_nav.circle_counter > 40 or         #Circling too much
-                    (local_nav.circle_counter > 20 and dijkstra.map.check_if_returned_to_path()))):#Back to path
+                    (local_nav.circle_counter > 500 or         #Circling too much
+                    (local_nav.circle_counter > 40 and dijkstra.map.check_if_returned_to_path()))):#Back to path
                 #Done with local nav
                 print("hands off")
                 local_nav.reset_state()
                 dijkstra.handle_local_navigation_exit()
+
+            dijkstra.map.update_kalman_filter(speed_left_wheel=node["motor.left.speed"], speed_right_wheel=node["motor.right.speed"])
             continue #disregards the rest of the while loop, which is in charge of Global Nav
             
         else:
