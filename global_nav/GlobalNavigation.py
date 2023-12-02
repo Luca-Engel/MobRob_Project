@@ -46,7 +46,7 @@ class DijkstraNavigation:
         print("dijkstra initialized")
         # contains the cell where the thymio was last before going into local navigation
 
-    def recompute_if_necessary(self):
+    def recompute_if_necessary(self, local_nav):
         """
         Checks if the path needs to be recomputed (i.e., if the start or goal has changed a lot compared to before)
         :return: The new path if it was recomputed, None otherwise
@@ -54,9 +54,10 @@ class DijkstraNavigation:
         if not self._has_goal_been_kidnapped() and not self._has_thymio_been_kidnapped():
             return None
 
-        return self.handle_kidnap()
+        return self.handle_kidnap(local_nav)
 
-    def handle_kidnap(self):
+    def handle_kidnap(self, local_nav):
+        local_nav.reset_state()
         self.map.kalman_filter.set_thymio_kidnap_location(self.map.get_camera_thymio_location_est(), self.map.get_camera_thymio_direction_est())
 
         self.start = self.map.get_kalman_thymio_location()
@@ -282,14 +283,14 @@ class DijkstraNavigation:
         self.goal = goal
         self.is_path_up_to_date = False
 
-    def update_navigation(self):
+    def update_navigation(self, local_nav):
         """
         Updates the navigation
         :return: None
         """
 
         self.map.update_goal_and_thymio_grid_location()
-        self.recompute_if_necessary()
+        self.recompute_if_necessary(local_nav)
         self._update_current_path_direction_idx()
 
     def _update_current_path_direction_idx(self):
@@ -395,7 +396,7 @@ async def main():
                                           speed_right_wheel=node["motor.right.speed"])
 
 
-        dijkstra.update_navigation()
+        dijkstra.update_navigation(local_nav)
 
         dijkstra.display_grid_as_image()
         dijkstra.display_feed()
