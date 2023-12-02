@@ -52,7 +52,17 @@ class Motion:
 
         position = 1
 
+        if abs(actual_angle - wanted_angle) > 320:
+            print("actual angle (special case)", actual_angle)
+            print("wanted angle (special case)", wanted_angle)
+            if actual_angle > wanted_angle:
+                actual_angle = actual_angle - 360
+            else:
+                wanted_angle = wanted_angle - 360
+
         if (change_idx != self.change_idx and abs(actual_angle - wanted_angle) > 10):  # < 6 degrees
+            print("position changed to 2")
+
             position = 2
         elif change_idx != self.change_idx:
             self.change_idx = change_idx
@@ -68,8 +78,8 @@ class Motion:
         if position == 1:
             left_speed = 0
             right_speed = 0
-            if (self.desired_angle - self.threshold_angle) <= actual_angle <= (
-                    self.desired_angle + self.threshold_angle):
+            if ((self.desired_angle - self.threshold_angle) <= actual_angle
+                    and actual_angle <= (self.desired_angle + self.threshold_angle)):
                 # print("111")
                 left_speed = self.normal_speed
                 right_speed = self.normal_speed
@@ -80,6 +90,9 @@ class Motion:
             elif actual_angle < (self.desired_angle - self.threshold_angle):
                 # print("222")
                 self.error = abs(actual_angle - self.desired_angle)
+                if self.error > 340:
+                    self.error = 360 - self.error
+
                 self.sum_error += self.error
 
                 # print("error", self.error)
