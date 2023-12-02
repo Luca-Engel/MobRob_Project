@@ -7,7 +7,7 @@ from map.GridMap import CellType
 from map.GridMap import CELL_ATTAINED_DISTANCE
 from thymio.MotionControl import Motion
 from thymio.MotionControl import rotation_nextpoint
-from thymio.LocalNavigation import LocalNavigation
+from thymio.LocalNavigation import LocalNavigation, LocalNavState
 
 from queue import PriorityQueue
 
@@ -54,6 +54,9 @@ class DijkstraNavigation:
         if not self._has_goal_been_kidnapped() and not self._has_thymio_been_kidnapped():
             return None
 
+        return self.handle_kidnap()
+
+    def handle_kidnap(self):
         self.map.kalman_filter.set_thymio_kidnap_location(self.map.get_camera_thymio_location_est(), self.map.get_camera_thymio_direction_est())
 
         self.start = self.map.get_kalman_thymio_location()
@@ -340,8 +343,7 @@ class DijkstraNavigation:
         self.map.set_last_known_cell_before_danger(thymio_location)
 
     def handle_local_navigation_exit(self):
-        # TODO
-        return 0
+        self.handle_kidnap()    #For now, treat the end of local nav as a kidnap, but we actually can skip recomputing the path
 
 
 async def main():
@@ -373,7 +375,7 @@ async def main():
 
     print(direction_changes)
 
-    local_navigation = LocalNavigation()
+    local_nav = LocalNavigation()   #Init LocalNav
 
     while True:
         dijkstra.update_navigation()
@@ -384,18 +386,20 @@ async def main():
         thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
         thymio_location = dijkstra.map.get_kalman_thymio_location()
 
-        # local navigation check
-        if local_navigation.danger_state != 0:
-            # thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
-            # thymio_location = dijkstra.map.get_kalman_thymio_location()
-
-            dijkstra.find_closest_cell_on_path(thymio_location)
-
-            # TODO: Marc
-            local_navigation.danger_navigation(thymio_direction, direction_changes, dijkstra._next_direction_change_idx)
-
-            # TODO: Luca
-            dijkstra.handle_local_navigation_exit()
+        dijkstra.find_closest_cell_on_path(thymio_location)
+        aw(node.wait_for_variables())
+        danger_level = local_nav.judge_severity(node["prox_horizontal"])
+        if danger_level != 0 or local_nav.state != LocalNavState.START:
+            local_nav.run(thymio_direction, direction_changes, dijkstra._next_direction_change_idx, node)
+            await Client.sleep(0.5) #give some slack to local nav
+            if(dijkstra.check_if_returned_to_path() and local_nav.state > LocalNavState.TURNING):
+                #Once we are done with local nav
+                dijkstra.handle_local_navigation_exit()
+                local_nav.reset_state()
+                break
+            continue #disregards the rest of the while loop, which is in charge of Global Nav
+            
+            
 
 
 

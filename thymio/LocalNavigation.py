@@ -1,4 +1,4 @@
-from tdmclient import ClientAsync
+from tdmclient import ClientAsync, aw
 from map.GridMap import GridMap
 import enum
 import numpy as np
@@ -41,13 +41,11 @@ class LocalNavState(enum.Enum):
 class LocalNavigation:
 
     def __init__(self):
-        # Add the map, the thymio position and direction
-        # self.target_dir = 0
         self.prox_horizontal = [0, 0, 0, 0, 0, 0, 0]
         self.danger_state = DangerState.SAFE
-        self.prev_danger_state = DangerState.SAFE
         self.danger_dir = [DangerState.SAFE]*7
         self.state = LocalNavState.START
+        self.turn_dir = 0
 
     
     def turn(self, dir):
@@ -67,28 +65,25 @@ class LocalNavigation:
         return motor_left_target, motor_right_target
 
     
-    async def judge_severity(self, prox_horizontal, node):
-        danger_state = DangerState.SAFE
-        await node.wait_for_variables()
+    def judge_severity(self, prox_horizontal):
+        self.danger_state = DangerState.SAFE
         print("Value", prox_horizontal[1])
+        #Do no handle the back sensors, since Thymio does not reverse
         for i in range(5):
             if (prox_horizontal[i] > SensorThresh.STOP_THRESH):
                 self.danger_dir[i] = DangerState.STOP
-                danger_state = DangerState.STOP
+                self.danger_state = DangerState.STOP
             elif (prox_horizontal[i] > SensorThresh.WARN_THRESH):
                 self.danger_dir[i] = DangerState.WARN
-                if (danger_state < DangerState.WARN):
-                    danger_state = DangerState.WARN
+                if (self.danger_state < DangerState.WARN):
+                    self.danger_state = DangerState.WARN
             else:
                 self.danger_dir[i] = DangerState.SAFE
-        return danger_state
 
     
-    def danger_navigation(self, direction, dir_changes, next_dir_change_idx):
+    def first_rotation(self, direction, dir_changes, next_dir_change_idx):
         turn_dir = self.determine_turn_dir(direction, dir_changes, next_dir_change_idx)
-        motor_left_target, motor_right_target = self.turn(turn_dir)
-
-        return 0
+        return self.turn(turn_dir)
 
     def determine_turn_dir(self, direction, dir_changes, next_dir_change_idx):
         previous_cell = dir_changes[next_dir_change_idx-1]
@@ -98,8 +93,10 @@ class LocalNavigation:
         turn_degrees = math.atan2(turn_vector[0], turn_vector[1]) / math.pi * 180
         turn_degrees = turn_degrees%360
         if turn_degrees > 180:
+            self.turn_dir = 'r'
             return 'r'
         else:
+            self.turn_dir = 'l'
             return 'l'
         
 
@@ -108,41 +105,41 @@ class LocalNavigation:
             "motor.left.target": [speed_left], "motor.right.target": [speed_right],
         }
 
+    def reset_state(self):
+        self.state = LocalNavState.START
     
-    async def run(self):
-        # Connecting the thymio
-        Client = ClientAsync()
-        node = await Client.wait_for_node()
-        await node.lock()
+    async def run(self, direction, dir_changes, next_dir_change_idx, node):
+        self.prox_horizontal = node["prox.horizontal"]
+        if self.danger_state == DangerState.SAFE and self.state == LocalNavState.START:
+            return        #failsafe
+        
+        #Danger
+        if self.danger_state != DangerState.SAFE and self.state == LocalNavState.START:
+            self.state = LocalNavState.ROTATING #Start turning
+        
+        if self.state == LocalNavState.ROTATING:
+            left_speed, right_speed = self.first_rotation(direction, dir_changes, next_dir_change_idx)
+            aw(node.set_variables(self.motors(int(left_speed), int(right_speed))))
+            self.judge_severity(node["prox_horizontal"])
+            if(self.danger_state == LocalNavState.SAFE):    #Done turning
+                self.state = LocalNavState.CIRCLING
+            return 
+        #Getting here means we are circling around the obstacle
+        forward_speed = 200
+        speed_offset  = 100
 
-        while True:
-            await node.wait_for_variables()
-            self.prox_horizontal = node["prox.horizontal"]
-            #left_speed, right_speed = get_current_motors, we need it
-            self.prev_danger_state = self.danger_state
-            self.danger_state = self.judge_severity(self.prox_horizontal)
-            if(self.danger_state != DangerState.SAFE and self.prev_danger_state == DangerState.SAFE):
-                # memorize current goal, set a flag blocking Global Nav
-                print("thymio enters unsafe waters")
-            if (self.danger_state == DangerState.STOP):  # Override all other nav, thymio needs to turn to safety
-
-                left_speed, right_speed = self.danger_nav()
-                print("danger")
-
-            elif (self.danger_state == DangerState.WARN):  # Add potential field vector to whatever nav we used before
-                left_speed, right_speed = self.potential_field(self.prox_horizontal, left_speed, right_speed)
-                print("warn")
-
-            elif (self.danger_state == DangerState.SAFE and self.prev_danger_state != DangerState.SAFE):
-                # Check Thymio position, take the path array, compute closest unvisited goal, and mark the skipped ones as visited.
-                # call reorientation routine
-                # clear the flag blocking Global Nav
-                print("back in the game")
-            print("Speed", left_speed, right_speed)
-            await node.set_variables(self.motors(int(left_speed), int(right_speed)))
-
-            await Client.sleep(0.1)
-
+        if self.state == LocalNavState.CIRCLING:
+            if self.danger_state != DangerState.SAFE:
+                speed_offset -=10
+            if self.turn_dir == 'l':
+                left_coeff = -1
+                right_coeff = 1
+            else:
+                left_coeff = 1
+                right_coeff = -1
+            left_speed = forward_speed + left_coeff*speed_offset
+            right_speed= forward_speed +right_coeff*speed_offset
+            aw(node.set_variables(self.motors(int(left_speed), int(right_speed))))
 
 
 if __name__ == "__main__":
