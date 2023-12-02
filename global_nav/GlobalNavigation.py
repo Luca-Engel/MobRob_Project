@@ -57,6 +57,8 @@ class DijkstraNavigation:
         return self.handle_kidnap(local_nav)
 
     def handle_kidnap(self, local_nav):
+        self.map.remove_path_from_grid()
+
         local_nav.reset_state()
         self.map.kalman_filter.set_thymio_kidnap_location(self.map.get_camera_thymio_location_est(), self.map.get_camera_thymio_direction_est())
 

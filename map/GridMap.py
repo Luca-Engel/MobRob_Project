@@ -119,6 +119,24 @@ class GridMap:
         self._compute_grid_image()
         self._grid_image_is_up_to_date = True
 
+
+    def remove_path_from_grid(self):
+        """
+        Removes the path from the grid
+        :return: None
+        """
+        if self.path is not None:
+            for x, y in self.path:
+                self._grid[y, x] = CellType.FREE
+
+            self.path = None
+            self._grid_image_is_up_to_date = False
+
+        if self._thymio_location_prev_grid_value == CellType.PATH or self._thymio_location_prev_grid_value == CellType.PATH_DIR_CHANGE:
+            self._thymio_location_prev_grid_value = CellType.FREE
+
+
+
     def _increase_object_size(self, radius=1):
         """
         Increases the size of the objects in the grid by the given radius (of the thymio)
