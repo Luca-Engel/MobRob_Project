@@ -7,7 +7,7 @@ from map.GridMap import CellType
 from map.GridMap import CELL_ATTAINED_DISTANCE
 from thymio.MotionControl import Motion
 from thymio.MotionControl import rotation_nextpoint
-from thymio.LocalNavigation import LocalNavigation, LocalNavState
+from thymio.LocalNavigation import LocalNavigation, LocalNavState, DangerState
 
 from queue import PriorityQueue
 
@@ -388,18 +388,33 @@ async def main():
 
         dijkstra.find_closest_cell_on_path(thymio_location)
         aw(node.wait_for_variables())
-        danger_level = local_nav.judge_severity(node["prox_horizontal"])
-        if danger_level != 0 or local_nav.state != LocalNavState.START:
-            local_nav.run(thymio_direction, direction_changes, dijkstra._next_direction_change_idx, node)
-            await Client.sleep(0.5) #give some slack to local nav
-            if(dijkstra.check_if_returned_to_path() and local_nav.state > LocalNavState.TURNING):
-                #Once we are done with local nav
-                dijkstra.handle_local_navigation_exit()
+        # print("node updated", node["prox.horizontal"])
+        local_nav.update_prox(node["prox.horizontal"])
+        danger_level = local_nav.judge_severity()
+        if danger_level != DangerState.SAFE or local_nav.state != LocalNavState.START:
+            motor_speeds = node["motor.left.target"], node["motor.right.target"]
+
+            # print("actual direction changes:", direction_changes)
+            # local_nav_direction_changes = np.array(direction_changes).copy()
+            local_nav_direction_changes = np.insert(np.array(direction_changes), 0, (dijkstra.start[0], dijkstra.start[1]), axis=0)
+
+            # local_nav_direction_changes = local_nav_direction_changes.insert(0, dijkstra.start)
+            # print("local nav direction changes:", local_nav_direction_changes)
+            local_nav_direction_change_idx = dijkstra._next_direction_change_idx + 1
+            motor_speeds = local_nav.run(thymio_direction, local_nav_direction_changes, local_nav_direction_change_idx,
+                                               motor_speeds)
+            aw(node.set_variables(motion_control.motors(int(motor_speeds[0]), int(motor_speeds[1]))))
+            if(danger_level == DangerState.SAFE and
+                    (local_nav.circle_counter > 40 or         #Circling too much
+                    (local_nav.circle_counter > 20 and dijkstra.map.check_if_returned_to_path()))):#Back to path
+                #Done with local nav
+                print("hands off")
                 local_nav.reset_state()
-                break
+                dijkstra.handle_local_navigation_exit()
             continue #disregards the rest of the while loop, which is in charge of Global Nav
             
-            
+        else:
+            print("Global Nav")
 
 
 
