@@ -344,9 +344,19 @@ class DijkstraNavigation:
         """
         self.map.set_last_known_cell_before_danger(thymio_location)
 
-    def handle_local_navigation_exit(self):
-        self.handle_kidnap()    #For now, treat the end of local nav as a kidnap, but we actually can skip recomputing the path
+    def handle_local_navigation_exit(self, thymio_location):
+        #self.handle_kidnap()    #For now, treat the end of local nav as a kidnap, but we actually can skip recomputing the path
+        x_thymio, y_thymio = thymio_location
 
+        self._next_direction_change_idx = 0
+        x_dir_change, y_dir_change = self.map.direction_changes[self._next_direction_change_idx]
+        for (x_path, y_path) in self.path:
+            if x_path == x_dir_change and y_path == y_dir_change:
+                self._next_direction_change_idx += 1
+                x_dir_change, y_dir_change = self.map.direction_changes[self._next_direction_change_idx]
+
+            if x_path == x_thymio and y_path == y_thymio:
+                break
 
 async def main():
     print("initializing")
@@ -380,6 +390,11 @@ async def main():
     local_nav = LocalNavigation()   #Init LocalNav
 
     while True:
+        aw(node.wait_for_variables())
+        dijkstra.map.update_kalman_filter(speed_left_wheel=node["motor.left.speed"],
+                                          speed_right_wheel=node["motor.right.speed"])
+
+
         dijkstra.update_navigation()
 
         dijkstra.display_grid_as_image()
@@ -388,7 +403,6 @@ async def main():
         thymio_direction, wanted_path_direction = dijkstra.get_thymio_and_path_directions()
         thymio_location = dijkstra.map.get_kalman_thymio_location()
 
-        aw(node.wait_for_variables())
         # print("node updated", node["prox.horizontal"])
         local_nav.update_prox(node["prox.horizontal"])
         danger_level = local_nav.judge_severity()
@@ -407,14 +421,16 @@ async def main():
             motor_speeds = local_nav.run(thymio_direction, local_nav_direction_changes, local_nav_direction_change_idx,
                                                motor_speeds)
             aw(node.set_variables(motion_control.motors(int(motor_speeds[0]), int(motor_speeds[1]))))
+
+            resume_path_cell = dijkstra.map.check_if_returned_to_path()
             if(danger_level != DangerState.STOP and
-                    (local_nav.circle_counter > 40 and dijkstra.map.check_if_returned_to_path())):#Back to path
+                    (local_nav.circle_counter > 40 and resume_path_cell is not None)):#Back to path
                 #Done with local nav
                 print("hands off")
                 local_nav.reset_state()
-                dijkstra.handle_local_navigation_exit()
+                dijkstra.handle_local_navigation_exit(thymio_location=resume_path_cell)
 
-            dijkstra.map.update_kalman_filter(speed_left_wheel=node["motor.left.speed"], speed_right_wheel=node["motor.right.speed"])
+            # dijkstra.map.update_kalman_filter(speed_left_wheel=node["motor.left.speed"], speed_right_wheel=node["motor.right.speed"])
             continue #disregards the rest of the while loop, which is in charge of Global Nav
             
         else:
@@ -444,9 +460,9 @@ async def main():
                                                                position=position, change_idx=change_idx)
 
         aw(node.set_variables(motion_control.motors(left_speed, right_speed)))
-        aw(node.wait_for_variables())
-        left_wheel_speed = node["motor.left.speed"]
-        right_wheel_speed = node["motor.right.speed"]
+        # aw(node.wait_for_variables())
+        # left_wheel_speed = node["motor.left.speed"]
+        # right_wheel_speed = node["motor.right.speed"]
 
         # print("Actual speed:", "left", left_wheel_speed, "right", right_wheel_speed)
 
@@ -456,7 +472,7 @@ async def main():
             aw(node.set_variables(motion_control.motors(0, 0)))
             break
 
-        dijkstra.map.update_kalman_filter(speed_left_wheel=left_wheel_speed, speed_right_wheel=right_wheel_speed)
+        # dijkstra.map.update_kalman_filter(speed_left_wheel=left_wheel_speed, speed_right_wheel=right_wheel_speed)
 
 
 if __name__ == "__main__":

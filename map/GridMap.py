@@ -676,9 +676,9 @@ class GridMap:
             distance = np.linalg.norm(thymio_location - cell_location)
 
             if distance < CELL_ATTAINED_DISTANCE:
-                return True
+                return cell_location
 
-        return False
+        return None
 
     def update_kalman_filter(self, speed_left_wheel, speed_right_wheel):
         """
