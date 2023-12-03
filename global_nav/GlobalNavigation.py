@@ -11,7 +11,7 @@ from thymio.LocalNavigation import LocalNavigation, LocalNavState, DangerState
 
 from queue import PriorityQueue
 
-KIDNAP_MIN_DISTANCE = 20
+KIDNAP_MIN_DISTANCE = 50 # 20
 
 
 class DijkstraNavigation:
@@ -43,6 +43,7 @@ class DijkstraNavigation:
         self._last_known_thymio_location = self.map.get_kalman_thymio_location()
         self._last_known_goal_location = self.map.get_goal_location()
         self._next_direction_change_idx = 0
+        self.direction_changes = []
         print("dijkstra initialized")
         # contains the cell where the thymio was last before going into local navigation
 
@@ -68,10 +69,11 @@ class DijkstraNavigation:
         self._last_known_thymio_location = self.map.get_kalman_thymio_location()
         self._next_direction_change_idx = 0
 
+
         print("Recomputing path...")
         path = self.compute_dijkstra_path()
         print("Path recomputed.")
-        find_direction_changes = self._find_direction_changes()
+        self.direction_changes = self._find_direction_changes()
         # self.map.set_direction_changes(direction_changes)
         return path
 
@@ -146,6 +148,8 @@ class DijkstraNavigation:
         direction_changes.append((prev_x, prev_y))
 
         self.map.set_direction_changes(direction_changes)
+
+        self.direction_changes = direction_changes
         return direction_changes
 
     def get_thymio_and_path_directions(self):
@@ -386,9 +390,9 @@ async def main():
 
     print(path)
 
-    direction_changes = dijkstra._find_direction_changes()
+    dijkstra._find_direction_changes()
 
-    print(direction_changes)
+    # print(direction_changes)
 
     local_nav = LocalNavigation()   #Init LocalNav
 
@@ -414,12 +418,8 @@ async def main():
         if danger_level != DangerState.SAFE or local_nav.state != LocalNavState.START:
             motor_speeds = node["motor.left.target"], node["motor.right.target"]
 
-            # print("actual direction changes:", direction_changes)
-            # local_nav_direction_changes = np.array(direction_changes).copy()
-            local_nav_direction_changes = np.insert(np.array(direction_changes), 0, (dijkstra.start[0], dijkstra.start[1]), axis=0)
+            local_nav_direction_changes = np.insert(np.array(dijkstra.direction_changes), 0, (dijkstra.start[0], dijkstra.start[1]), axis=0)
 
-            # local_nav_direction_changes = local_nav_direction_changes.insert(0, dijkstra.start)
-            # print("local nav direction changes:", local_nav_direction_changes)
             local_nav_direction_change_idx = dijkstra._next_direction_change_idx + 1
             motor_speeds = local_nav.run(thymio_direction, local_nav_direction_changes, local_nav_direction_change_idx,
                                                motor_speeds)
