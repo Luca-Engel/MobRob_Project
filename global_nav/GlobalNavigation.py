@@ -366,11 +366,9 @@ class DijkstraNavigation:
             if x_path == x_thymio and y_path == y_thymio:
                 break
 
-async def main():
+async def main(node):
     print("initializing")
 
-    Client = ClientAsync()
-    node = aw(Client.wait_for_node())
     aw(node.lock())
 
     motion_control = Motion(node)
@@ -450,8 +448,10 @@ async def main():
             aw(node.set_variables(motion_control.motors(0, 0)))
             while True:
                 if cv2.waitKey(1) & 0xFF == ord('q'):
+                    cv2.destroyAllWindows()
                     aw(node.set_variables(motion_control.motors(0, 0)))
-                    break
+                    aw(node.unlock())
+                    return
 
             position = 0
             print("Reached goal!")
@@ -476,24 +476,19 @@ async def main():
                                                                position=position, change_idx=change_idx, is_going_straight_down=is_going_straight_down)
 
         aw(node.set_variables(motion_control.motors(left_speed, right_speed)))
-        # aw(node.wait_for_variables())
-        # left_wheel_speed = node["motor.left.speed"]
-        # right_wheel_speed = node["motor.right.speed"]
-
-        # print("Actual speed:", "left", left_wheel_speed, "right", right_wheel_speed)
-
-        if cv2.waitKey(1) & 0xFF == ord('s'):
-            aw(node.set_variables(motion_control.motors(0, 0)))
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            aw(node.set_variables(motion_control.motors(0, 0)))
-            break
-
-        # dijkstra.map.update_kalman_filter(speed_left_wheel=left_wheel_speed, speed_right_wheel=right_wheel_speed)
 
 
 if __name__ == "__main__":
-    ClientAsync.run_async_program(main)
-    # main_without_thymio()
+    client = ClientAsync()
+    node = aw(client.wait_for_node())
+
+    try:
+        ClientAsync.run_async_program(lambda: main(node))
+
+    except Exception as e:
+        print("Error:", e)
+        cv2.destroyAllWindows()
+        aw(node.unlock())
 
 
 
