@@ -19,8 +19,8 @@ CAMERA_COVERED_NOISE_COVARIANCE = (
 MIN_THYMIO_360_TURN_PERIOD = 9
 
 DT = 0.1
-SPEED_SCALE_FACTOR = 0.1 # 0.2 --> if larger, estimated speed gets faster
-ROTATIONAL_VELOCITY_SCALE_FACTOR = 0.25 # 0.5, if larger, estimated rotational velocity gets faster
+SPEED_SCALE_FACTOR = 0.12 #0.17 #0.1 # 0.2 --> if larger, estimated speed gets faster
+ROTATIONAL_VELOCITY_SCALE_FACTOR = 0.15#0.25 # 0.5, if larger, estimated rotational velocity gets faster
 MAX_VELOCITY_FOR_STATIONARY_CLASSIFICATION = 5
 
 
@@ -206,4 +206,5 @@ class ThymioKalmanFilter:
         :param direction_thymio_camera_est: new estimated direction of the Thymio from the camera
         :return: None
         """
+
         self._initialize_kalman_filter(position_thymio_camera_est, direction_thymio_camera_est)

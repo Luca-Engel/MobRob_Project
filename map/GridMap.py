@@ -12,7 +12,7 @@ from filtering.KalmanFilterLibrary import ThymioKalmanFilter
 CELL_ATTAINED_DISTANCE = 3
 
 # Width/2 of the thymio in grid cells
-THYMIO_HALF_SIZE = 12
+THYMIO_HALF_SIZE = 14
 
 # Any island with a radius of 2 cells or less will be removed
 ISLAND_REMOVAL_RADIUS = 2
@@ -46,6 +46,7 @@ class GridMap:
         direction_changes : list of (x, y) tuples
             The direction changes in the path.
     """
+
     def __init__(self, width=160, height=120, thymio_marker_id=4, goal_marker_id=5, load_from_file=None):
         self.grid_image = None
         self.path = None
@@ -119,6 +120,22 @@ class GridMap:
         self._compute_grid_image()
         self._grid_image_is_up_to_date = True
 
+    def remove_path_from_grid(self):
+        """
+        Removes the path from the grid
+        :return: None
+        """
+        if self.path is not None:
+            for x, y in self.path:
+                self._grid[y, x] = CellType.FREE
+
+            self.path = None
+            self._grid_image_is_up_to_date = False
+
+        if self._thymio_location_prev_grid_value == CellType.PATH or self._thymio_location_prev_grid_value == CellType.PATH_DIR_CHANGE:
+            self._thymio_location_prev_grid_value = None
+
+
     def _increase_object_size(self, radius=1):
         """
         Increases the size of the objects in the grid by the given radius (of the thymio)
@@ -130,7 +147,8 @@ class GridMap:
         for y in range(self._height):
             for x in range(self._width):
                 if self._grid[y, x] == CellType.OBJECT:
-                    for k in range(-radius, radius + 1):
+                    for k in range(-radius - 2, radius + 1 - 2
+                                   ):
                         for l in range(-radius, radius + 1):
                             if (0 <= y + k < self._height
                                     and 0 <= x + l < self._width
@@ -212,7 +230,8 @@ class GridMap:
         while True:
             contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
 
-            if (not need_all_6_markers and self._thymio_marker_id in ids) or (len(ids) >= 6 and self._thymio_marker_id in ids and self._goal_marker_id in ids):
+            if (not need_all_6_markers and self._thymio_marker_id in ids) or (
+                    len(ids) >= 6 and self._thymio_marker_id in ids and self._goal_marker_id in ids):
                 break
 
         marker_width = 0
@@ -244,9 +263,7 @@ class GridMap:
 
             self.kalman_filter.update(np.array([x, y]), direction, 0, 0)
 
-        self._update_thymio_grid_location_and_direction(binary_image, corners, ids,
-                                                        location_kalman=self.kalman_filter.get_location_est(),
-                                                        direction_kalman=self.kalman_filter.get_direction_est())
+        self._update_thymio_grid_location_and_direction(binary_image, corners, ids)
         self._update_goal_grid_location(binary_image, corners, ids)
 
     def _remove_markers_as_objects_from_grid(self, binary_image, corners, ids):
@@ -284,10 +301,21 @@ class GridMap:
         """
         contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
 
+        self._add_path_and_direction_changes_to_grid()
+
         self._update_thymio_grid_location_and_direction(binary_image, corners, ids)
         self._update_goal_grid_location(binary_image, corners, ids)
 
         return self._thymio_camera_location, self._goal_location
+
+    def _add_path_and_direction_changes_to_grid(self):
+        if self.path is not None:
+            for x, y in self.path:
+                self._grid[y, x] = CellType.PATH
+
+        if self.direction_changes is not None:
+            for x, y in self.direction_changes:
+                self._grid[y, x] = CellType.PATH_DIR_CHANGE
 
     def _update_goal_grid_location(self, binary_image, corners, ids):
         """
@@ -305,8 +333,7 @@ class GridMap:
                                           self._goal_location)
             self._grid_image_is_up_to_date = False
 
-    def _update_thymio_grid_location_and_direction(self, binary_image, corners, ids, location_kalman=None,
-                                                   direction_kalman=None):
+    def _update_thymio_grid_location_and_direction(self, binary_image, corners, ids):
         """
         Updates the thymio location and its facing direction in the grid
         :param binary_image: the binary image
@@ -331,14 +358,13 @@ class GridMap:
             if self._times_thymio_not_detected > 10:
                 self._thymio_camera_location = None
 
-
-            # TODO: check why this is not called!!!!!
             # update thymio location if camera does not see it
             last_location = self._thymio_kalman_location
-            if last_location is not None:
+            if last_location is not None and self._thymio_location_prev_grid_value is not None:
                 self._draw_marker_circle(
                     self._thymio_location_prev_grid_value,
                     last_location[0], last_location[1])
+
 
             value = CellType.THYMIO
             x, y = self.kalman_filter.get_location_est()
@@ -456,18 +482,18 @@ class GridMap:
         if direction_change_idx is not None and direction_change_idx < len(self.direction_changes):
             thymio_location = np.array(self.kalman_filter.get_location_est())
             thymio_direction = tuple(map(int, 10 * np.array(self.kalman_filter.get_direction_est())))
-            wanted_direction = tuple(map(int, (np.array(self.direction_changes[direction_change_idx]) - thymio_location)))
+            wanted_direction = tuple(
+                map(int, (np.array(self.direction_changes[direction_change_idx]) - thymio_location)))
 
             print("thymio_location", thymio_location)
             print("thymio_direction", thymio_direction)
             print("wanted_direction", wanted_direction)
 
             image = cv2.arrowedLine(image, tuple(thymio_location),
-                                  tuple(np.add(thymio_location, 10 * np.array(thymio_direction))), (255, 0, 0), 2)
+                                    tuple(np.add(thymio_location, 10 * np.array(thymio_direction))), (255, 0, 0), 2)
 
             image = cv2.arrowedLine(image, tuple(thymio_location),
-                                  tuple(np.add(thymio_location, 10 * np.array(wanted_direction))), (0, 0, 0), 2)
-
+                                    tuple(np.add(thymio_location, 10 * np.array(wanted_direction))), (0, 0, 0), 2)
 
         cv2.imshow("grid map", image)
 
@@ -519,7 +545,7 @@ class GridMap:
         """
         contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
 
-        cv2.imshow("Current Feed", frame_with_objects)
+        # cv2.imshow("Current Feed", frame_with_objects)
 
     def user_has_quit(self):
         """
@@ -594,7 +620,7 @@ class GridMap:
             temp_dir_img = cv2.arrowedLine(self.grid_image, self._thymio_kalman_location,
                                            np.array(self._thymio_kalman_location) + np.array(
                                                tuple(map(int, 100 * np.array(self._thymio_kalman_direction)))),
-                                           (255, 0, 0), 2) # this is color (BGR)
+                                           (255, 0, 0), 2)  # this is color (BGR)
             # cv2.imshow("image with thymio direction", temp_dir_img)
 
         # direction = self._thymio_corners[0][0] - self._thymio_corners[0][3]
@@ -676,6 +702,7 @@ class GridMap:
             distance = np.linalg.norm(thymio_location - cell_location)
 
             if distance < CELL_ATTAINED_DISTANCE:
+                print("Thymio has returned to path, cell location: ", cell_location)
                 return cell_location
 
         return None
