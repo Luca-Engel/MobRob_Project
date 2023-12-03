@@ -24,7 +24,6 @@ class WebcamFeed:
                  window_name: str = 'Webcam Feed',
                  load_from_file: str = None):
 
-        print("Starting webcam feed...")
         current_time = datetime.now().strftime("%H:%M:%S")
 
         self.camera_index = camera_index
@@ -40,8 +39,6 @@ class WebcamFeed:
         # ...here
 
         self.load_from_file = load_from_file
-
-        # cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
 
         print("WebcamFeed initialized.")
 
@@ -78,8 +75,6 @@ class WebcamFeed:
             print("Error: Failed to capture frame.")
             return None
 
-        # cv2.imshow(self.window_name, frame)
-
         return frame
 
     def release_resources(self):
@@ -107,5 +102,3 @@ if __name__ == "__main__":
         if webcam.user_has_quit():
             webcam.release_resources()
             break
-
-    print("Done.")

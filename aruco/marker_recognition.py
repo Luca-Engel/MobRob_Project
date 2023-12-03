@@ -22,14 +22,11 @@ class ArUcoMarkerDetector:
     def __init__(self,
                  webcam: WebcamFeed,
                  thymio_marker_id = 0):
-        print("Initializing aruco_detector...")
 
         self.webcam_feed = webcam
         self.thymio_marker_id = thymio_marker_id
         self.marker_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
         self.transformation_matrix = None
-
-        print("aruco_detector initialized.")
 
     def detect_markers(self, base_frame=None):
         """

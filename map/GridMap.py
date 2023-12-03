@@ -497,14 +497,6 @@ class GridMap:
 
         cv2.imshow("grid map", image)
 
-        # thymio_location = self.get_thymio_grid_coordinates()
-        # goal_location = self.get_goal_grid_coordinates()
-        # thymio_location = self.get_thymio_location()
-        # goal_location = self.get_thymio_location()
-        #
-        # new_image=cv2.arrowedLine(self.grid_image, thymio_location, goal_location, (0, 255, 255), 2)
-        # cv2.imshow("image with thymio and goal location", new_image)
-
     def set_path(self, path):
         """
         Sets the path in the grid
@@ -611,21 +603,10 @@ class GridMap:
         # print("thymio kalman direction", self._thymio_kalman_direction)
 
         if self.grid_image is not None:
-            # print("thymio camera location self._thymio_direction)
-            # print("shapes", np.array(self._thymio_camera_location).shape, np.array(self._thymio_kalman_direction).shape)
-            # temp_dir_img = cv2.arrowedLine(self.grid_image, self._thymio_camera_location,
-            #                                np.array(self._thymio_camera_location) + np.array(
-            #                                    tuple(map(int, 100 * np.array(self._thymio_kalman_direction)))),
-            #                                (255, 0, 0), 2)
             temp_dir_img = cv2.arrowedLine(self.grid_image, self._thymio_kalman_location,
                                            np.array(self._thymio_kalman_location) + np.array(
                                                tuple(map(int, 100 * np.array(self._thymio_kalman_direction)))),
                                            (255, 0, 0), 2)  # this is color (BGR)
-            # cv2.imshow("image with thymio direction", temp_dir_img)
-
-        # direction = self._thymio_corners[0][0] - self._thymio_corners[0][3]
-        # normalized_direction = direction / np.linalg.norm(direction)
-        # self._thymio_direction = normalized_direction
 
     def get_camera_thymio_direction_est(self):
         """

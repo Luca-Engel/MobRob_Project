@@ -74,7 +74,6 @@ class LocalNavigation:
         self.danger_state = DangerState.SAFE
         #Do no handle the back sensors, since Thymio does not reverse
         for i in range(5):
-            print("Value", self.prox_horizontal[i])
             if (self.prox_horizontal[i] > SensorThresh.STOP_THRESH.value):
                 self.danger_dir[i] = DangerState.STOP
                 self.danger_state = DangerState.STOP
@@ -91,21 +90,12 @@ class LocalNavigation:
         return self.turn(turn_dir)
 
     def determine_turn_dir(self, direction, dir_changes, next_dir_change_idx):
-        if(next_dir_change_idx == 0):
-            print("panic()")
-            exit(0)
-
-        print("direction changes: ", np.array(dir_changes))
-
         previous_cell = np.array(dir_changes[next_dir_change_idx-1])
         current_cell = np.array(dir_changes[next_dir_change_idx])
         next_cell = np.array(dir_changes[next_dir_change_idx+1])
 
         current_vector = current_cell - previous_cell
         next_vector = next_cell - current_cell
-
-        print("current vector: ", current_vector)
-        print("next vector: ", next_vector)
 
         orientation_current_v = rotation_nextpoint(current_vector)
         orientation_next_v = rotation_nextpoint(next_vector)
@@ -132,20 +122,16 @@ class LocalNavigation:
         self.circle_counter = 0
     
     def run(self, direction, dir_changes, next_dir_change_idx, motor_speeds):
-        print("We are in local nav now, state is", self.state, "danger is", self.danger_state)
         if self.danger_state == DangerState.SAFE and self.state == LocalNavState.START:
             return motor_speeds
         
         #Danger
         if self.danger_state == DangerState.STOP and self.state == LocalNavState.START:
-            print("start turning")
             self.state = LocalNavState.ROTATING #Start turning
             left_speed, right_speed = self.first_rotation(direction, dir_changes, next_dir_change_idx)
             return left_speed, right_speed
         
         if self.state == LocalNavState.ROTATING:
-            print("is turning")
-            print("dangerstate:", self.danger_state)
             if(self.danger_state == DangerState.SAFE):    #Done turning
                 self.rotate_counter +=1
                 if self.rotate_counter > 5:
@@ -153,8 +139,6 @@ class LocalNavigation:
                     return 0, 0
             return (self.first_rotation(direction, dir_changes, next_dir_change_idx))
         #Getting here means we are circling around the obstacle
-        print("circling")
-
 
         if self.state == LocalNavState.CIRCLING:
             self.circle_counter += 1
