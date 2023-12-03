@@ -85,6 +85,12 @@ class Motion:
             self._total_actual_angle += difference_actual_angle
             self._total_wanted_angle += difference_wanted_angle
 
+            while abs(self._total_actual_angle - self._total_wanted_angle) > 360:
+                if self._total_actual_angle > self._total_wanted_angle:
+                    self._total_actual_angle -= 360
+                else:
+                    self._total_actual_angle += 360
+
             self._last_actual_angle = actual_angle
             self._last_wanted_angle = wanted_angle
 
