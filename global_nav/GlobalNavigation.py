@@ -11,7 +11,7 @@ from thymio.LocalNavigation import LocalNavigation, LocalNavState, DangerState
 
 from queue import PriorityQueue
 
-KIDNAP_MIN_DISTANCE = 50 # 20
+KIDNAP_MIN_DISTANCE = 70 # 20
 
 
 class DijkstraNavigation:
@@ -73,6 +73,7 @@ class DijkstraNavigation:
         print("Recomputing path...")
         path = self.compute_dijkstra_path()
         print("Path recomputed.")
+        print("Path: ", path)
         self.direction_changes = self._find_direction_changes()
         # self.map.set_direction_changes(direction_changes)
         return path
@@ -426,6 +427,7 @@ async def main():
             aw(node.set_variables(motion_control.motors(int(motor_speeds[0]), int(motor_speeds[1]))))
 
             resume_path_cell = dijkstra.map.check_if_returned_to_path()
+            print("circle counter: ", local_nav.circle_counter)
             if(danger_level != DangerState.STOP and
                     (local_nav.circle_counter > 40 and resume_path_cell is not None)):#Back to path
                 #Done with local nav
@@ -455,12 +457,23 @@ async def main():
             print("Reached goal!")
 
         thymio_angle = rotation_nextpoint(thymio_direction)%360
-
         wanted_angle = rotation_nextpoint(wanted_path_direction)%360
+        path = dijkstra.map.get_path()
+        dir_change_cell = dijkstra.direction_changes[dijkstra._next_direction_change_idx]
+        is_going_straight_down = False
+        for i in range(len(path)):
+            x, y = path[i]
+            x_dir_change, y_dir_change = dir_change_cell
+            if x == x_dir_change and y == y_dir_change and i > 0:
+                x_prev, y_prev = path[i-1]
+                if x == x_prev and y - 1 == y_prev:
+                    is_going_straight_down = True
+                    break
+
 
         change_idx = dijkstra._next_direction_change_idx
         left_speed, right_speed = motion_control.pi_regulation(actual_angle=thymio_angle, wanted_angle=wanted_angle,
-                                                               position=position, change_idx=change_idx)
+                                                               position=position, change_idx=change_idx, is_going_straight_down=is_going_straight_down)
 
         aw(node.set_variables(motion_control.motors(left_speed, right_speed)))
         # aw(node.wait_for_variables())
