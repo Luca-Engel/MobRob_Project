@@ -545,7 +545,7 @@ class GridMap:
         """
         contours, binary_image, frame_with_objects, corners, ids = self._object_detector.detect_objects()
 
-        cv2.imshow("Current Feed", frame_with_objects)
+        # cv2.imshow("Current Feed", frame_with_objects)
 
     def user_has_quit(self):
         """
