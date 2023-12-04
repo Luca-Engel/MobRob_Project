@@ -13,6 +13,7 @@ from queue import PriorityQueue
 
 KIDNAP_MIN_DISTANCE = 70
 CIRCLE_COUNTER_BUFFER = 40
+MOVE = 1
 
 
 class DijkstraNavigation:
@@ -405,7 +406,7 @@ async def main(node):
 
             continue  # disregards the rest of the while loop, which is in charge of Global Nav
 
-        position = 1
+        movement = MOVE
 
         if dijkstra.has_thymio_reached_goal():
 
@@ -432,7 +433,7 @@ async def main(node):
 
         change_idx = dijkstra._next_direction_change_idx
         left_speed, right_speed = motion_control.pi_regulation(actual_angle=thymio_angle, wanted_angle=wanted_angle,
-                                                               position=position, change_idx=change_idx)
+                                                               movement=movement, change_idx=change_idx)
 
         aw(node.set_variables(motion_control.motors(left_speed, right_speed)))
 
