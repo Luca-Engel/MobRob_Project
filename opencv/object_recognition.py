@@ -5,7 +5,7 @@ from opencv.webcam_input import WebcamFeed
 from aruco.marker_recognition import ArUcoMarkerDetector
 
 THRESHOLD_MAX_VAL = 255
-OBJECT_THRESHOLD = 46#50#35 #30#60
+OBJECT_THRESHOLD = 46
 
 
 class ObjectDetector:
@@ -17,10 +17,6 @@ class ObjectDetector:
             self.aruco_marker_detector.process_image_with_aruco_markers())
 
         cv2.imshow('Video Feed', base_frame)
-
-        # cv2.imshow('base Frame', base_frame)
-
-        # cv2.imshow('Base Frame', base_frame)
 
         if (ids is not None and 0 in ids and 1 in ids and 2 in ids and 3 in ids):
             top_left_aruco = corners[np.where(ids == 0)[0][0]]
@@ -61,63 +57,11 @@ class ObjectDetector:
 
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-
         # Threshold the image to get binary image with black objects on white background
         # binary image is 0 where no black object is detected, 255 where black object is detected
         _, binary_image = cv2.threshold(gray_frame, OBJECT_THRESHOLD, THRESHOLD_MAX_VAL, cv2.THRESH_BINARY_INV)
 
         return binary_image
-
-    # def _extract_black_objects(self, image, corner_aruco_markers):
-    #     """
-    #     Extract black objects on a white surface, excluding ArUco markers.
-    #     :param image: The input image.
-    #     :param corner_aruco_markers: The corners of the ArUco markers.
-    #     :return: The image with black objects on a white surface.
-    #     """
-    #     # Create a mask to keep only the black objects
-    #     mask = np.ones_like(image, dtype=np.uint8) * 255  # White background
-    #
-    #     for i in range(len(corner_aruco_markers)):
-    #         # Exclude ArUco markers from the mask
-    #         cv2.fillPoly(mask, [np.array(corner_aruco_markers[i], dtype=np.int32)], (0, 0, 0))
-    #
-    #     # Apply the mask to the original image
-    #     result = cv2.bitwise_and(image, mask)
-    #
-    #     return result
-
-    # def _extract_black_objects(self, image, corner_aruco_markers):
-    #     """
-    #     Extract black objects on a white surface, excluding ArUco markers.
-    #     :param image: The input image.
-    #     :param corner_aruco_markers: The corners of the ArUco markers.
-    #     :return: The image with black objects on a white surface.
-    #     """
-    #     # Create a mask to keep only the black objects
-    #     mask = np.ones_like(image, dtype=np.uint8) * 255  # White background
-    #
-    #     for i in range(len(corner_aruco_markers)):
-    #         # Exclude ArUco markers from the mask
-    #         print("got it")
-    #         cv2.fillPoly(mask, [np.array(corner_aruco_markers[i], dtype=np.int32)], (255, 0, 0))
-    #
-    #     # Apply the mask to the original image
-    #     result = image#cv2.bitwise_and(image, mask)
-    #
-    #     # Convert the result to a single-channel (grayscale) image
-    #     gray_frame = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
-    #
-    #
-    #     # Threshold the image to get binary image with black objects on white background
-    #     _, binary_image = cv2.threshold(gray_frame, 60, 255, cv2.THRESH_BINARY_INV)
-    #
-    #     # Exclude the ArUco markers from the binary image
-    #     binary_image = cv2.bitwise_and(binary_image, cv2.bitwise_not(mask))
-    #
-    #     return binary_image
-
-
 
 if __name__ == "__main__":
     # Sample usage:

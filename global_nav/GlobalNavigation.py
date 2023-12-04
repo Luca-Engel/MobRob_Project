@@ -344,8 +344,6 @@ async def main(node):
 
     path = dijkstra.compute_dijkstra_path()
 
-    print(path)
-
     dijkstra._find_direction_changes()
 
     local_nav = LocalNavigation()  # Init LocalNav
@@ -386,9 +384,6 @@ async def main(node):
                 dijkstra.handle_local_navigation_exit(thymio_location=resume_path_cell)
 
             continue  # disregards the rest of the while loop, which is in charge of Global Nav
-
-        else:
-            print("Global Nav")
 
         position = 1
 
@@ -433,6 +428,10 @@ if __name__ == "__main__":
     try:
         ClientAsync.run_async_program(lambda: main(node))
 
+    except TypeError:
+        print("No valid path found")
+        cv2.destroyAllWindows()
+        aw(node.unlock())
     except Exception as e:
         print("Error:", e)
         cv2.destroyAllWindows()

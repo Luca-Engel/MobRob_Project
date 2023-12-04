@@ -183,9 +183,6 @@ class GridMap:
         :param radius: the radius of the island
         :return: True if the cells within the radius form an island, False otherwise
         """
-        if (self._grid[y, x] != CellType.OBJECT):
-            print("error: cell is not an object")
-            print("(x, y): ", x, y)
         count = 0
         for k in range(-radius, radius + 1):
             for l in range(-radius, radius + 1):
@@ -254,10 +251,7 @@ class GridMap:
         self._remove_markers_as_objects_from_grid(binary_image, corners, ids)
 
         if update_kalman_filter:
-            # print("corners", corners)
-            print("corners shape", corners.shape)
             corners_for_thymio = corners[np.where(ids == self._thymio_marker_id)[0]][0][0]
-            print("corners_for_thymio", corners_for_thymio.shape)
             x, y = self._convert_to_centroid_grid_indices(corners_for_thymio, len(binary_image[0]), len(binary_image))
             direction = corners_for_thymio[0] - corners_for_thymio[3]
 
@@ -408,7 +402,6 @@ class GridMap:
 
         # update the last location of the thymio or goal to the last value / FREE, respectively
         if last_location is not None:
-            print("last_location", last_location)
             self._draw_marker_circle(
                 self._thymio_location_prev_grid_value if value == CellType.THYMIO else CellType.FREE,
                 last_location[0], last_location[1])
@@ -484,10 +477,6 @@ class GridMap:
             thymio_direction = tuple(map(int, 10 * np.array(self.kalman_filter.get_direction_est())))
             wanted_direction = tuple(
                 map(int, (np.array(self.direction_changes[direction_change_idx]) - thymio_location)))
-
-            print("thymio_location", thymio_location)
-            print("thymio_direction", thymio_direction)
-            print("wanted_direction", wanted_direction)
 
             image = cv2.arrowedLine(image, tuple(thymio_location),
                                     tuple(np.add(thymio_location, 10 * np.array(thymio_direction))), (255, 0, 0), 2)
@@ -570,8 +559,6 @@ class GridMap:
         :return: (x, y) tuple
         """
         if self._thymio_camera_location is None:
-            # throw exception:
-            # raise Exception("Thymio location not found")
             print("Thymio location not found --> navigate only with kalman filter")
 
         return self._thymio_camera_location
@@ -581,12 +568,6 @@ class GridMap:
         Returns the thymio location in grid coordinates
         :return: (x, y) tuple
         """
-        # if self._thymio_location is None:
-        #     # throw exception:
-        #     raise Exception("Thymio location not found")
-        #
-        # return self._thymio_location
-
         return self.kalman_filter.get_location_est()
 
     def _update_thymio_direction(self):
@@ -595,12 +576,10 @@ class GridMap:
         :return: None
         """
         if self._thymio_corners is None:
-            # throw exception:
             raise Exception("Thymio location not found")
 
         self._thymio_camera_direction = self._thymio_corners[0][0] - self._thymio_corners[0][3]
         self._thymio_kalman_direction = self.kalman_filter.get_direction_est()
-        # print("thymio kalman direction", self._thymio_kalman_direction)
 
         if self.grid_image is not None:
             temp_dir_img = cv2.arrowedLine(self.grid_image, self._thymio_kalman_location,
@@ -683,7 +662,6 @@ class GridMap:
             distance = np.linalg.norm(thymio_location - cell_location)
 
             if distance < CELL_ATTAINED_DISTANCE:
-                print("Thymio has returned to path, cell location: ", cell_location)
                 return cell_location
 
         return None
