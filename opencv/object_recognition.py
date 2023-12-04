@@ -18,17 +18,16 @@ class ObjectDetector:
 
         cv2.imshow('Video Feed', base_frame)
 
-        if (ids is not None and 0 in ids and 1 in ids and 2 in ids and 3 in ids):
+        if ids is not None and 0 in ids and 1 in ids and 2 in ids and 3 in ids:
             top_left_aruco = corners[np.where(ids == 0)[0][0]]
             top_right_aruco = corners[np.where(ids == 1)[0][0]]
             bottom_right_aruco = corners[np.where(ids == 2)[0][0]]
             bottom_left_aruco = corners[np.where(ids == 3)[0][0]]
 
             # Get the binary image with black objects on a white background, excluding ArUco markers
-            binary_image = self._extract_black_objects(base_frame, [top_left_aruco, top_right_aruco, bottom_right_aruco,
-                                                                   bottom_left_aruco])
+            binary_image = self._extract_black_objects(base_frame)
         else:
-            binary_image = self._extract_black_objects(base_frame, [])
+            binary_image = self._extract_black_objects(base_frame)
 
         # Find contours of black objects
         contours, _ = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -41,20 +40,14 @@ class ObjectDetector:
         if self.aruco_marker_detector.webcam_feed.user_has_quit():
             self.aruco_marker_detector.release_resources()
 
-
         return contours, binary_image, frame_with_objects, corners, ids
 
-    def _extract_black_objects(self, frame, corner_aruco_markers):
+    def _extract_black_objects(self, frame):
         """
         Extract the black objects from a frame.
         :param frame: The frame to extract the black objects from.
-        :param corner_aruco_markers: Corners of ArUco markers to be excluded.
         :return: The binary image with black objects on a white background.
         """
-
-        # Convert corner_aruco_markers to numpy.int32
-        corner_aruco_markers = np.array(corner_aruco_markers, dtype=np.int32)
-
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # Threshold the image to get binary image with black objects on white background
@@ -62,6 +55,7 @@ class ObjectDetector:
         _, binary_image = cv2.threshold(gray_frame, OBJECT_THRESHOLD, THRESHOLD_MAX_VAL, cv2.THRESH_BINARY_INV)
 
         return binary_image
+
 
 if __name__ == "__main__":
     # Sample usage:
