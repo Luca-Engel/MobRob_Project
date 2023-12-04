@@ -2,6 +2,11 @@ import math
 
 from tdmclient import ClientAsync, aw
 
+# Constant in motion control
+STOP_MOVING = 0
+STOP = 0
+MOVE = 1
+ROTATE = 2
 
 # Create a class for every instance of the motors
 class Motion:
@@ -9,52 +14,67 @@ class Motion:
 
         self.node = node
 
-        self.changing_pose = False
+        self.changing_pose      = False
         self.nextpoint_achieved = False
-
-        self.Kp = 3
-        self.Ki = 0.2
-
-        self.distance = 0
-        self.angle = 0
+        
+        self.distance     = 0
+        self.angle        = 0
         self.normal_speed = 100
-
-        self.threshold_angle = 2
-        self.desired_angle = 0
+        
+        self.threshold_angle = 2 # Avoiding oscillation on the desired angle
+        self.desired_angle   = 0
         # Need to calibrate this for the lecture of the angle
-        self.calibration = 5
+        self.calibration     = 5
 
-        self.sum_error = 0
+        # Regulator parameter
+        self.Kp            = 3         # Finding the parameters of our Pi controller by tuning them during test
+        self.Ki            = 0.2
+        self.sum_error     = 0
         self.max_sum_error = 30
-        self.error = 0
-        self.change_idx = -1
-
+        self.error         = 0
+        self.change_idx    = -1
+        
+        # Parameters of the Thymio angle and the desired one
         self._total_actual_angle = None
         self._last_actual_angle = None
         self._total_wanted_angle = None
         self._last_wanted_angle = None
 
     def motors(self, speed_left, speed_right):
-
+        """""
+        Send the information to provide to the Thymio for changing the speed of the wheels
+        Return : "motor.left.target": [int(speed_left)], "motor.right.target": [int(speed_right)]
+    """
         return {
             "motor.left.target": [int(speed_left)], "motor.right.target": [int(speed_right)],
         }
 
     def move(self, left_speed, right_speed):
+    """""
+        Send the new velocity of the motors to the Thymio
+    """
         aw(self.node.send_set_variables(self.motors(int(left_speed), int(right_speed))))
 
-    def pi_regulation(self, actual_angle, wanted_angle, position, change_idx):
+    def pi_regulation(self, actual_angle, wanted_angle, movement, change_idx):
+    """""
+        The control of the robot is done in this function. We have 3 states that the Thymio can be
+        1) STOP: the Thymio has reached a point so we stop for a instance the motors
+        2) MOVE: the Thymio is moving to the next point with a PI controller that adjust the velocity
+                 of both wheels to adjust the trajectory of the robot
+        3) ROTATE: Before moving to the next point, the Thymio rotate on itself to face the next point
+                   it needs to go
+        Return : left_speed, right_speed
+    """
         self.desired_angle = wanted_angle
 
-        # Position at 0 means that the robot achieved the next point and need to stop moving
-        if position == 0:
-            left_speed = 0
-            right_speed = 0
+        # Movement at Stop means that the robot has achieved the next point and stop moving
+        if movement == STOP:
+            left_speed = STOP_MOVING
+            right_speed = STOP_MOVING
             return left_speed, right_speed
-            # position = 2
 
-        position = 1
-
+        # Initialise the movement of the Thymio
+        movement = MOVE
 
         # total angle stuff ---------
         if self._total_actual_angle is None:
@@ -93,17 +113,20 @@ class Motion:
             self._last_wanted_angle = wanted_angle
 
         if (change_idx != self.change_idx and abs(self._total_actual_angle - self._total_wanted_angle) > 10):  # < 6 degrees
-            position = 2
+            movement = ROTATE
         elif change_idx != self.change_idx:
             self.change_idx = change_idx
         elif abs(self._total_wanted_angle - self._total_wanted_angle) > 30:
             self.change_idx = -1
-            position = 2
+            movement = ROTATE
 
-        # Position at 1 means that the robot is achieving the next point
-        if position == 1:
-            left_speed = 0
-            right_speed = 0
+        # movement at Move means that the robot is achieving the next point
+        if movement == MOVE:
+            left_speed = STOP_MOVING
+            right_speed = STOP_MOVING
+
+            # Control if the Thymio is inside the threshold cone of acceptance. If it's not the case
+            # the pi controller is active to correct the trajectory
             if ((self._total_wanted_angle - self.threshold_angle) <= self._total_actual_angle
                     and self._total_actual_angle <= (self._total_wanted_angle + self.threshold_angle)):
                 left_speed = self.normal_speed
@@ -111,7 +134,7 @@ class Motion:
 
                 self.error = 0
                 self.sum_error = 0
-
+            
             elif self._total_actual_angle < (self._total_wanted_angle - self.threshold_angle):
                 self.error = abs(self._total_actual_angle - self._total_wanted_angle)
                 if self.error > 330:
@@ -119,6 +142,8 @@ class Motion:
 
                 self.sum_error += self.error
 
+                # To avoid that the Thymio start to drift with high speed in a wheel, we implemented an anti wind-up
+                # to protect from the integrator of our controller
                 if self.sum_error < self.max_sum_error:
                     left_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.sum_error)
                     right_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.sum_error)
@@ -131,6 +156,8 @@ class Motion:
                 self.error = abs(self._total_actual_angle - self._total_wanted_angle)
                 self.sum_error += self.error
 
+                # To avoid that the Thymio start to drift with high speed in a wheel, we implemented an anti wind-up
+                # to protect from the integrator of our controller
                 if self.sum_error < self.max_sum_error:
                     left_speed = self.normal_speed + (self.Kp * self.error + self.Ki * self.sum_error)
                     right_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.sum_error)
@@ -140,8 +167,9 @@ class Motion:
                     right_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.max_sum_error)
 
             return left_speed, right_speed
-        # Position at 2 means that the robot need to rotate to face the next point
-        elif position == 2:
+            
+        # Movement at Rotate means that the robot need to rotate to face the next point
+        elif Movement == ROTATE:
 
             if (self._total_wanted_angle - self._total_actual_angle) >= 0:
                 if self._total_wanted_angle - self._total_actual_angle >= 180:
@@ -170,8 +198,8 @@ class Motion:
                 return left_speed, right_speed
 
             else:
-                position = 0
-                return 0, 0
+                movement = STOP
+                return STOP_MOVING, STOP_MOVING
 
 
 def distance_nextpoint(actual_pos, next_pos):
@@ -191,7 +219,7 @@ def rotation_nextpoint(direction):
     return math.atan2(direction[0], direction[1]) / math.pi * 180
 
 
-
+# Function to test the motors of the Thymio without the rest of the code
 async def motion_control_test():
     # Connecting the thymio
     Client = ClientAsync()
