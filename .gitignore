@@ -3,3 +3,4 @@
 /map/Map_large_obstacles.docx
 /map/print_elems/Map_large_obstacles.docx
 /.ipynb_checkpoints/
+*.pyc
