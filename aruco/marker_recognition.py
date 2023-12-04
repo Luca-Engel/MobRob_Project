@@ -122,6 +122,16 @@ class ArUcoMarkerDetector:
         return processed_frame, corners, ids, frame_markers, ids_to_direction, base_frame
 
     def _transform_images(self, base_frame, corners, frame_markers, h, processed_frame, w):
+        """
+        Transform the base frame and the frame with markers drawn on it to place the corner markers in the frame corners.
+        :param base_frame: base frame
+        :param corners: markers' corners
+        :param frame_markers: frame with markers drawn on it
+        :param h: height of the frame
+        :param processed_frame: frame to be transformed
+        :param w: width of the frame
+        :return: base frame, transformed corners, transformed frame with markers drawn on it
+        """
         processed_frame = cv2.warpPerspective(frame_markers, self.transformation_matrix, (w, h))
         base_frame = cv2.warpPerspective(base_frame, self.transformation_matrix, (w, h))
         corners = cv2.perspectiveTransform(corners.reshape(-1, 1, 2), self.transformation_matrix).reshape(corners.shape)
@@ -141,6 +151,10 @@ class ArUcoMarkerDetector:
                 image_corner_coordinates.append(corners[i][0])
 
     def release_resources(self):
+        """
+        Release the webcam resources.
+        :return: None
+        """
         self.webcam_feed.release_resources()
 
 

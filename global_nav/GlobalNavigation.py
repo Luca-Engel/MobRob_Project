@@ -12,6 +12,7 @@ from thymio.LocalNavigation import LocalNavigation, LocalNavState, DangerState
 from queue import PriorityQueue
 
 KIDNAP_MIN_DISTANCE = 70
+CIRCLE_COUNTER_BUFFER = 40
 
 
 class DijkstraNavigation:
@@ -54,9 +55,14 @@ class DijkstraNavigation:
         return self.handle_kidnap(local_nav)
 
     def handle_kidnap(self, local_nav):
+        """
+        Handles the case where the Thymio or the goal has been kidnapped
+        :param local_nav: The local navigation instance
+        :return: The new path to the goal
+        """
         self.map.remove_path_from_grid()
 
-        local_nav.reset_state() #Important, as we might kidnap the thymio as it circles
+        local_nav.reset_state() # Important, as we might kidnap the thymio as it circles
         self.map.kalman_filter.set_thymio_kidnap_location(self.map.get_camera_thymio_location_est(),
                                                           self.map.get_camera_thymio_direction_est())
 
@@ -107,6 +113,10 @@ class DijkstraNavigation:
         return distance > KIDNAP_MIN_DISTANCE
 
     def _find_direction_changes(self):
+        """
+        Finds the direction changes in the path
+        :return: The direction changes in the path
+        """
         if len(self.path) < 2:
             return []
 
@@ -173,9 +183,9 @@ class DijkstraNavigation:
         goal = self.goal
 
         rows, cols = grid.shape
-        distances = np.full((rows, cols), -1)  # Initialize distances with infinity
-        nb_turns = np.full((rows, cols), -1)  # Initialize nb_turns with infinity
-        predecessors = -1 * np.ones((rows, cols, 2), dtype=int)  # Initialize predecessors with -1
+        distances = np.full((rows, cols), -1)
+        nb_turns = np.full((rows, cols), -1)
+        predecessors = -1 * np.ones((rows, cols, 2), dtype=int)
         visited = np.zeros((rows, cols), dtype=bool)
 
         priority_queue = PriorityQueue()
@@ -316,6 +326,11 @@ class DijkstraNavigation:
         self.map.set_last_known_cell_before_danger(thymio_location)
 
     def handle_local_navigation_exit(self, thymio_location):
+        """
+        Handles the exit of local navigation and takeover of global navigation
+        :param thymio_location: The Thymio's location
+        :return: None
+        """
         x_thymio, y_thymio = thymio_location
 
         self._next_direction_change_idx = 0
@@ -330,6 +345,11 @@ class DijkstraNavigation:
 
 
 async def main(node):
+    """
+    Main function
+    :param node: The Thymio node instance
+    :return: None
+    """
     print("initializing")
 
     aw(node.lock())
@@ -378,7 +398,7 @@ async def main(node):
 
             resume_path_cell = dijkstra.map.check_if_returned_to_path()
             if (danger_level != DangerState.STOP and
-                    (local_nav.circle_counter > 40 and resume_path_cell is not None)):  # Back to path, wtih some slack
+                    (local_nav.circle_counter > CIRCLE_COUNTER_BUFFER and resume_path_cell is not None)):  # Back to path, wtih some slack
                 # Done with local nav
                 local_nav.reset_state()
                 dijkstra.handle_local_navigation_exit(thymio_location=resume_path_cell)

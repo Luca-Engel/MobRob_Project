@@ -112,7 +112,7 @@ class ThymioKalmanFilter:
         :return: None
         """
 
-        # -100 <= v <= 100
+        # WHEEL_MIN_SPEED <= v <= WHEEL_MAX_SPEED
         v = (left_wheel_speed + right_wheel_speed) / 2.0
 
         right_wheel_speed = max(min(right_wheel_speed, WHEEL_MAX_SPEED), WHEEL_MIN_SPEED)
