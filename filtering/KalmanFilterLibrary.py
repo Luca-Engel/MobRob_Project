@@ -9,19 +9,26 @@ NORMAL_NOISE_COVARIANCE = (
               [0, 0, 1, 0],
               [0, 0, 0, 0.001]]))
 
-CAMERA_COVERED_NOISE_COVARIANCE = (
-    np.array([[0.2, 0, 0, 0],
-              [0, 0.2, 0, 0],
-              [0, 0, 0.5, 0],
-              [0, 0, 0, 0.1]]))
-
-# seconds for 100 and -100 speed to make a 360 turn
+# seconds for 100 and -100 speed to make a 360 turn, found experimentally
 MIN_THYMIO_360_TURN_PERIOD = 9
 
 DT = 0.1
-SPEED_SCALE_FACTOR = 0.12 #0.17 #0.1 # 0.2 --> if larger, estimated speed gets faster
-ROTATIONAL_VELOCITY_SCALE_FACTOR = 0.15#0.25 # 0.5, if larger, estimated rotational velocity gets faster
+SPEED_SCALE_FACTOR = 0.12 # --> if larger, estimated speed gets faster
+ROTATIONAL_VELOCITY_SCALE_FACTOR = 0.15 # if larger, estimated rotational velocity gets faster
 MAX_VELOCITY_FOR_STATIONARY_CLASSIFICATION = 5
+
+DIM_X = 4
+DIM_Z = 4
+
+MATRIX_F_DIAG_VALUE = 1.0
+MATRIX_H_DIAG_VALUE = 1
+MATRIX_R_DIAG_VALUE = 0.1
+MATRIX_B_DIAG_VALUE = 1
+
+WHEEL_MIN_SPEED = -100
+WHEEL_MAX_SPEED = 100
+
+X_LAST_VALUE = 1
 
 
 class ThymioKalmanFilter:
@@ -58,7 +65,7 @@ class ThymioKalmanFilter:
         :param direction_thymio_camera_est: estimated direction of the Thymio from the camera, cannot be None
         :return: None
         """
-        self.kf = KalmanFilter(dim_x=4, dim_z=4)
+        self.kf = KalmanFilter(dim_x=DIM_X, dim_z=DIM_Z)
 
         dir_x, dir_y = direction_thymio_camera_est
         angle = math.atan2(dir_y, dir_x)
@@ -68,32 +75,32 @@ class ThymioKalmanFilter:
         self.total_direction_angle_camera = angle
 
         # Initial state (x, y, angle)
-        self.kf.x = np.array([position_thymio_camera_est[0], position_thymio_camera_est[1], angle, 1])
+        self.kf.x = np.array([position_thymio_camera_est[0], position_thymio_camera_est[1], angle, X_LAST_VALUE])
 
         # State transition matrix
         # first line is for x, second for y, third for angle
-        self.kf.F = np.diag([1.0, 1, 1, 1])  # np.diag(1.0 * np.ones(4))
+        self.kf.F = np.diag([MATRIX_F_DIAG_VALUE, MATRIX_F_DIAG_VALUE, MATRIX_F_DIAG_VALUE, MATRIX_F_DIAG_VALUE])
 
         # Measurement function
-        self.kf.H = np.array([[1, 0, 0, 0],
-                              [0, 1, 0, 0],
-                              [0, 0, 1, 0],
-                              [0, 0, 0, 1]])
+        self.kf.H = np.array([[MATRIX_H_DIAG_VALUE, 0, 0, 0],
+                              [0, MATRIX_H_DIAG_VALUE, 0, 0],
+                              [0, 0, MATRIX_H_DIAG_VALUE, 0],
+                              [0, 0, 0, MATRIX_H_DIAG_VALUE]])
 
         # Measurement noise covariance
-        self.kf.R = np.array([[0.1, 0, 0, 0],
-                              [0, 0.1, 0, 0],
-                              [0, 0, 0.1, 0],
-                              [0, 0, 0, 0.1]])
+        self.kf.R = np.array([[MATRIX_R_DIAG_VALUE, 0, 0, 0],
+                              [0, MATRIX_R_DIAG_VALUE, 0, 0],
+                              [0, 0, MATRIX_R_DIAG_VALUE, 0],
+                              [0, 0, 0, MATRIX_R_DIAG_VALUE]])
 
         # Process noise covariance
         self.kf.Q = NORMAL_NOISE_COVARIANCE
 
         # Control input matrix should account for the position and orientation of the robot
-        self.kf.B = np.array([[1, 0, 0, 0],
-                              [0, 1, 0, 0],
-                              [0, 0, 1, 0],
-                              [0, 0, 0, 1]])
+        self.kf.B = np.array([[MATRIX_B_DIAG_VALUE, 0, 0, 0],
+                              [0, MATRIX_B_DIAG_VALUE, 0, 0],
+                              [0, 0, MATRIX_B_DIAG_VALUE, 0],
+                              [0, 0, 0, MATRIX_B_DIAG_VALUE]])
 
     def update(self, position_camera_est, direction_camera_est, left_wheel_speed, right_wheel_speed):
         """
@@ -108,24 +115,24 @@ class ThymioKalmanFilter:
         # -100 <= v <= 100
         v = (left_wheel_speed + right_wheel_speed) / 2.0
 
-        right_wheel_speed = max(min(right_wheel_speed, 100), -100)
-        left_wheel_speed = max(min(left_wheel_speed, 100), -100)
+        right_wheel_speed = max(min(right_wheel_speed, WHEEL_MAX_SPEED), WHEEL_MIN_SPEED)
+        left_wheel_speed = max(min(left_wheel_speed, WHEEL_MAX_SPEED), WHEEL_MIN_SPEED)
 
         period = 0
         if abs(right_wheel_speed - left_wheel_speed) > 0.5:  # avoid division by 0 and large values
-            period = (200 / (
+            period = ((2*WHEEL_MAX_SPEED) / (
                     right_wheel_speed - left_wheel_speed)) * MIN_THYMIO_360_TURN_PERIOD  # positive sense is counterclockwise
         w = 0
         if period != 0:
             w = - 2 * np.pi / period
 
-        self.kf.F[2, 3] = w * ROTATIONAL_VELOCITY_SCALE_FACTOR  # * 0.1 #DT  # becomes theta_k+1 = theta_k + w * DT
+        self.kf.F[2, 3] = w * ROTATIONAL_VELOCITY_SCALE_FACTOR
 
         if abs(v) < MAX_VELOCITY_FOR_STATIONARY_CLASSIFICATION:
             # Pure rotation without translation, i.e., the thymio is not moving forward or backward
             # --> keep the postion the same
-            self.kf.F[0, 3] = 0 # 1  # 0.0001 # 1
-            self.kf.F[1, 3] = 0 # 1  # 0.0001 # 1
+            self.kf.F[0, 3] = 0
+            self.kf.F[1, 3] = 0
         else:
             # Translation with rotation
             v = v * SPEED_SCALE_FACTOR
@@ -133,7 +140,7 @@ class ThymioKalmanFilter:
             self.kf.F[1, 3] = v * math.sin(self.kf.x[2]) * DT  # becomes y_k+1 = y_k + v * sin(theta) * DT
 
         # update last element of x to guarantee that it is always 1
-        self.kf.x[3] = 1
+        self.kf.x[3] = X_LAST_VALUE
 
         self.kf.predict()
 
@@ -158,7 +165,7 @@ class ThymioKalmanFilter:
         self.last_temp_direction_angle_camera = direction_angle_camera
 
         self.kf.update(np.array(
-            [position_camera_est[0], position_camera_est[1], self.total_direction_angle_camera, 1]))
+            [position_camera_est[0], position_camera_est[1], self.total_direction_angle_camera, X_LAST_VALUE]))
 
     def get_location_est(self):
         """
@@ -206,5 +213,4 @@ class ThymioKalmanFilter:
         :param direction_thymio_camera_est: new estimated direction of the Thymio from the camera
         :return: None
         """
-
         self._initialize_kalman_filter(position_thymio_camera_est, direction_thymio_camera_est)
