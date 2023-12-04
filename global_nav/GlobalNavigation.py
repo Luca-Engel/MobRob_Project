@@ -56,7 +56,7 @@ class DijkstraNavigation:
     def handle_kidnap(self, local_nav):
         self.map.remove_path_from_grid()
 
-        local_nav.reset_state()
+        local_nav.reset_state() #Important, as we might kidnap the thymio as it circles
         self.map.kalman_filter.set_thymio_kidnap_location(self.map.get_camera_thymio_location_est(),
                                                           self.map.get_camera_thymio_direction_est())
 
@@ -348,7 +348,7 @@ async def main(node):
 
     local_nav = LocalNavigation()  # Init LocalNav
 
-    while True:
+    while True:                     # This is the main loop, runs until the goal is reached
         aw(node.wait_for_variables())
         dijkstra.map.update_kalman_filter(speed_left_wheel=node["motor.left.speed"],
                                           speed_right_wheel=node["motor.right.speed"])
@@ -365,20 +365,22 @@ async def main(node):
         danger_level = local_nav.judge_severity()
         if danger_level == DangerState.SAFE and local_nav.state == LocalNavState.START:
             dijkstra.find_closest_cell_on_path(thymio_location)  # Only compute when Global Nav is active
-        if danger_level != DangerState.SAFE or local_nav.state != LocalNavState.START:
-            motor_speeds = node["motor.left.target"], node["motor.right.target"]
 
+        if danger_level != DangerState.SAFE or local_nav.state != LocalNavState.START: #LocalNav is active
+            motor_speeds = node["motor.left.target"], node["motor.right.target"]    #old targets, needed in case of faulty call
+
+            #Add a direction change to the list's head, in case of local navigation while thymio has not moved yet
             local_nav_direction_changes = np.insert(np.array(dijkstra.direction_changes), 0,
                                                     (dijkstra.start[0], dijkstra.start[1]), axis=0)
-
             local_nav_direction_change_idx = dijkstra._next_direction_change_idx + 1
-            motor_speeds = local_nav.run(thymio_direction, local_nav_direction_changes, local_nav_direction_change_idx,
+
+            motor_speeds = local_nav.run(local_nav_direction_changes, local_nav_direction_change_idx,
                                          motor_speeds)
             aw(node.set_variables(motion_control.motors(int(motor_speeds[0]), int(motor_speeds[1]))))
 
             resume_path_cell = dijkstra.map.check_if_returned_to_path()
             if (danger_level != DangerState.STOP and
-                    (local_nav.circle_counter > 40 and resume_path_cell is not None)):  # Back to path
+                    (local_nav.circle_counter > 40 and resume_path_cell is not None)):  # Back to path, wtih some slack
                 # Done with local nav
                 local_nav.reset_state()
                 dijkstra.handle_local_navigation_exit(thymio_location=resume_path_cell)
@@ -397,21 +399,17 @@ async def main(node):
                     aw(node.unlock())
                     return
 
-            position = 0
-            print("Reached goal!")
 
         thymio_angle = rotation_nextpoint(thymio_direction) % 360
         wanted_angle = rotation_nextpoint(wanted_path_direction) % 360
         path = dijkstra.map.get_path()
         dir_change_cell = dijkstra.direction_changes[dijkstra._next_direction_change_idx]
-        is_going_straight_down = False
         for i in range(len(path)):
             x, y = path[i]
             x_dir_change, y_dir_change = dir_change_cell
             if x == x_dir_change and y == y_dir_change and i > 0:
                 x_prev, y_prev = path[i - 1]
                 if x == x_prev and y - 1 == y_prev:
-                    is_going_straight_down = True
                     break
 
         change_idx = dijkstra._next_direction_change_idx
