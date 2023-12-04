@@ -1,7 +1,7 @@
 import cv2
 from datetime import datetime
 
-
+WEBCAM_INDEX = 1
 class WebcamFeed:
     """
         A class to capture and display frames from a webcam.
@@ -19,7 +19,7 @@ class WebcamFeed:
     """
 
     def __init__(self,
-                 camera_index: int = 1,
+                 camera_index: int = WEBCAM_INDEX,
                  cap_show: int = cv2.CAP_DSHOW,
                  window_name: str = 'Webcam Feed',
                  load_from_file: str = None):
@@ -30,13 +30,10 @@ class WebcamFeed:
         self.cap_show = cap_show
         self.window_name = window_name + ' - Press q to quit - Started at ' + str(current_time)
 
-        # to test with image, remove these lines until...
-
         self.cap = None if load_from_file is not None else cv2.VideoCapture(self.camera_index, self.cap_show)
 
         if self.cap is not None and not self.cap.isOpened():
             raise ValueError("Error: Could not open webcam.")
-        # ...here
 
         self.load_from_file = load_from_file
 
