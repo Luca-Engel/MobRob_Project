@@ -11,7 +11,7 @@ from thymio.LocalNavigation import LocalNavigation, LocalNavState, DangerState
 
 from queue import PriorityQueue
 
-KIDNAP_MIN_DISTANCE = 70  # 20
+KIDNAP_MIN_DISTANCE = 70
 
 
 class DijkstraNavigation:
@@ -102,7 +102,7 @@ class DijkstraNavigation:
         last_thymio_location = np.array(last_thymio_location)
 
         distance = np.linalg.norm(last_thymio_location - current_thymio_location)
-        self._last_known_thymio_location = current_thymio_location  # is this line needed???
+        self._last_known_thymio_location = current_thymio_location
 
         return distance > KIDNAP_MIN_DISTANCE
 
@@ -149,6 +149,7 @@ class DijkstraNavigation:
 
         normalized_thymio_direction = thymio_direction / np.linalg.norm(thymio_direction)
 
+        # Prevent division by 0
         if np.linalg.norm(wanted_path_direction) == 0:
             return normalized_thymio_direction, (0, 0)
         normalized_wanted_path_direction = wanted_path_direction / np.linalg.norm(wanted_path_direction)
@@ -177,10 +178,8 @@ class DijkstraNavigation:
         predecessors = -1 * np.ones((rows, cols, 2), dtype=int)  # Initialize predecessors with -1
         visited = np.zeros((rows, cols), dtype=bool)
 
-        # Priority queue to keep track of cells to be visited, with priority as the distance
         priority_queue = PriorityQueue()
 
-        # Starting point
         distances[(start[1], start[0])] = 0
         nb_turns[(start[1], start[0])] = 0
         predecessors[(start[1], start[0])] = np.array((start[1], start[0]))
@@ -227,7 +226,7 @@ class DijkstraNavigation:
         path = []
         current = (goal[1], goal[0])
         while not (np.array_equal(current, (start[1], start[0])) or np.array_equal(current, np.array([-1, -1]))):
-            y, x = current  # divmod(current, cols)
+            y, x = current
             path.append((x, y))
             current = predecessors[y, x]
 
@@ -261,7 +260,6 @@ class DijkstraNavigation:
         Updates the navigation
         :return: None
         """
-
         self.map.update_goal_and_thymio_grid_location()
         self.recompute_if_necessary(local_nav)
         self._update_current_path_direction_idx()
