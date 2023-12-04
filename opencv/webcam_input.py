@@ -1,7 +1,7 @@
 import cv2
 from datetime import datetime
 
-
+WEBCAM_INDEX = 1
 class WebcamFeed:
     """
         A class to capture and display frames from a webcam.
@@ -19,7 +19,7 @@ class WebcamFeed:
     """
 
     def __init__(self,
-                 camera_index: int = 1,
+                 camera_index: int = WEBCAM_INDEX,
                  cap_show: int = cv2.CAP_DSHOW,
                  window_name: str = 'Webcam Feed',
                  load_from_file: str = None):
