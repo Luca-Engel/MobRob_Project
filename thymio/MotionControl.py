@@ -7,9 +7,13 @@ STOP_MOVING = 0
 STOP = 0
 MOVE = 1
 ROTATE = 2
+ANGLE_JUMP_TOLERANCE = 280
 
 # Create a class for every instance of the motors
 class Motion:
+    """
+    This class is used to control the motion of the Thymio
+    """
     def __init__(self, node):
 
         self.node = node
@@ -41,22 +45,22 @@ class Motion:
         self._last_wanted_angle = None
 
     def motors(self, speed_left, speed_right):
-        """""
+        """"
         Send the information to provide to the Thymio for changing the speed of the wheels
         Return : "motor.left.target": [int(speed_left)], "motor.right.target": [int(speed_right)]
-    """
+        """
         return {
             "motor.left.target": [int(speed_left)], "motor.right.target": [int(speed_right)],
         }
 
     def move(self, left_speed, right_speed):
-    """""
+        """"
         Send the new velocity of the motors to the Thymio
-    """
+        """
         aw(self.node.send_set_variables(self.motors(int(left_speed), int(right_speed))))
 
     def pi_regulation(self, actual_angle, wanted_angle, movement, change_idx):
-    """""
+        """"
         The control of the robot is done in this function. We have 3 states that the Thymio can be
         1) STOP: the Thymio has reached a point so we stop for a instance the motors
         2) MOVE: the Thymio is moving to the next point with a PI controller that adjust the velocity
@@ -64,7 +68,7 @@ class Motion:
         3) ROTATE: Before moving to the next point, the Thymio rotate on itself to face the next point
                    it needs to go
         Return : left_speed, right_speed
-    """
+        """
         self.desired_angle = wanted_angle
 
         # Movement at Stop means that the robot has achieved the next point and stop moving
@@ -85,13 +89,13 @@ class Motion:
             self._last_wanted_angle = wanted_angle
 
         else:
-            if abs(actual_angle - self._last_actual_angle) > 180:
+            if abs(actual_angle - self._last_actual_angle) > ANGLE_JUMP_TOLERANCE:
                 if actual_angle > self._last_actual_angle:
                     actual_angle -= 360
                 else:
                     actual_angle += 360
 
-            if abs(wanted_angle - self._last_wanted_angle) > 180:
+            if abs(wanted_angle - self._last_wanted_angle) > ANGLE_JUMP_TOLERANCE:
                 if wanted_angle > self._last_wanted_angle:
                     wanted_angle -= 360
                 else:
@@ -169,7 +173,7 @@ class Motion:
             return left_speed, right_speed
             
         # Movement at Rotate means that the robot need to rotate to face the next point
-        elif Movement == ROTATE:
+        elif movement == ROTATE:
 
             if (self._total_wanted_angle - self._total_actual_angle) >= 0:
                 if self._total_wanted_angle - self._total_actual_angle >= 180:
@@ -202,16 +206,16 @@ class Motion:
                 return STOP_MOVING, STOP_MOVING
 
 
-def distance_nextpoint(actual_pos, next_pos):
-    """""
-        Calculate the distance to the next point in
-        the global navigation
-    """
-    return math.sqrt(math.pow((actual_pos[0] - next_pos[0]), 2) + math.pow(actual_pos[1] - next_pos[1], 2))
+# def distance_nextpoint(actual_pos, next_pos):
+#     """
+#         Calculate the distance to the next point in
+#         the global navigation
+#     """
+#     return math.sqrt(math.pow((actual_pos[0] - next_pos[0]), 2) + math.pow(actual_pos[1] - next_pos[1], 2))
 
 
 def rotation_nextpoint(direction):
-    """""
+    """
         Rotation of the Thymio before moving to
         the next point
         Return the value in degree
