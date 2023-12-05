@@ -27,6 +27,8 @@ BINARY_IMAGE_OBJECT_THRESHOLD = 100
 
 UPDATE_GOAL_BUFFER_DISTANCE = 2
 
+GRID_IMAGE_SCALE_FACTOR = 4
+
 
 class CellType(enum.Enum):
     FREE = '_'
@@ -203,7 +205,7 @@ class GridMap:
                         count += 1
         return count < 2  # i.e., no neighbours of the island within the radius are objects -> island
 
-    def _compute_grid_image(self, scale_factor=4):
+    def _compute_grid_image(self, scale_factor=GRID_IMAGE_SCALE_FACTOR):
         """
         Computes the grid image corresponding to the 2d grid
         :param scale_factor: the scale factor to increase the size of the displayed grid image
@@ -473,15 +475,25 @@ class GridMap:
         # draw wanted and actual directions
         if direction_change_idx is not None and direction_change_idx < len(self.direction_changes):
             thymio_location = np.array(self.kalman_filter.get_location_est())
-            thymio_direction = tuple(map(int, 10 * np.array(self.kalman_filter.get_direction_est())))
+            thymio_direction = np.array(self.kalman_filter.get_direction_est())
+            normalized_thymio_direction = thymio_direction / np.linalg.norm(thymio_direction)
+            normalized_thymio_direction = tuple(map(int, 60 * normalized_thymio_direction))
+
             wanted_direction = tuple(
                 map(int, (np.array(self.direction_changes[direction_change_idx]) - thymio_location)))
+            # normalized_wanted_direction = wanted_direction
+            if np.linalg.norm(wanted_direction) == 0:
+                normalized_wanted_direction = wanted_direction
+            else:
+                normalized_wanted_direction = np.array(wanted_direction) / np.linalg.norm(wanted_direction)
+            normalized_wanted_direction = tuple(map(int, 60 * np.array(normalized_wanted_direction)))
 
-            image = cv2.arrowedLine(image, tuple(thymio_location),
-                                    tuple(np.add(thymio_location, 10 * np.array(thymio_direction))), (255, 0, 0), 2)
+            scaled_thymio_location = tuple(map(int, GRID_IMAGE_SCALE_FACTOR * np.array(thymio_location)))
+            image = cv2.arrowedLine(image, tuple(scaled_thymio_location),
+                                    tuple(np.add(scaled_thymio_location, np.array(normalized_thymio_direction))), (255, 0, 0), 2)
 
-            image = cv2.arrowedLine(image, tuple(thymio_location),
-                                    tuple(np.add(thymio_location, 10 * np.array(wanted_direction))), (0, 0, 0), 2)
+            image = cv2.arrowedLine(image, tuple(scaled_thymio_location),
+                                    tuple(np.add(scaled_thymio_location, np.array(normalized_wanted_direction))), (0, 0, 0), 2)
 
         cv2.imshow("grid map", image)
 
