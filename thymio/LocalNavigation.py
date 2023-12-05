@@ -35,6 +35,7 @@ class LocalNavigation:
         self.turn_dir = 0
         self.rotate_counter = 0
         self.circle_counter = 0
+        self.dir = 'l'
         #The circle_counter may be read outside the class, in order to decide on slack for circling
 
     

@@ -7,13 +7,13 @@ NORMAL_NOISE_COVARIANCE = (
     np.array([[0.001, 0, 0, 0],
               [0, 0.001, 0, 0],
               [0, 0, 1, 0],
-              [0, 0, 0, 0.001]]))
+              [0, 0, 0, 0]]))
 
 # seconds for 100 and -100 speed to make a 360 turn, found experimentally
 MIN_THYMIO_360_TURN_PERIOD = 9
 
 DT = 0.1
-SPEED_SCALE_FACTOR = 0.12 # --> if larger, estimated speed gets faster
+SPEED_SCALE_FACTOR = 0.16 # --> if larger, estimated speed gets faster
 ROTATIONAL_VELOCITY_SCALE_FACTOR = 0.15 # if larger, estimated rotational velocity gets faster
 MAX_VELOCITY_FOR_STATIONARY_CLASSIFICATION = 5
 
