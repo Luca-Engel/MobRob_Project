@@ -5,7 +5,7 @@ from opencv.webcam_input import WebcamFeed
 from aruco.marker_recognition import ArUcoMarkerDetector
 
 THRESHOLD_MAX_VAL = 255
-OBJECT_THRESHOLD = 25
+OBJECT_THRESHOLD = 35
 
 
 class ObjectDetector:

@@ -74,7 +74,7 @@ class GridMap:
         self._goal_corners = None
         self._thymio_camera_location = None
         self._times_thymio_not_detected = 0
-        self._thymio_location_prev_grid_value = None
+        self._thymio_location_prev_grid_value = CellType.FREE
         self._thymio_kalman_direction = None
         self._goal_location = None
         self._grid_image_is_up_to_date = False
@@ -212,8 +212,20 @@ class GridMap:
         :return: None
         """
 
-        self.grid_image = np.array(np.vectorize(lambda x: self._color_mapping.get(x, (0, 0, 0)))(self._grid))
+        grid = self._grid.copy()
+        thymio_location = self._thymio_kalman_location
+        goal_location = self._goal_location
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                if 0 <= thymio_location[0] + i < self._width and 0 <= thymio_location[1] + j < self._height:
+                    grid[thymio_location[1] + j, thymio_location[0] + i] = CellType.THYMIO
+
+                if 0 <= goal_location[0] + i < self._width and 0 <= goal_location[1] + j < self._height:
+                    grid[goal_location[1] + j, goal_location[0] + i] = CellType.GOAL
+
+        self.grid_image = np.array(np.vectorize(lambda x: self._color_mapping.get(x, (0, 0, 0)))(grid))
         self.grid_image = np.stack(self.grid_image, axis=-1)
+
 
         height, width = self.grid_image.shape[:2]
 
@@ -226,6 +238,7 @@ class GridMap:
                 resized_image[scale_factor * i:scale_factor * (i + 1), scale_factor * j:scale_factor * (j + 1),
                 :] = self.grid_image[i, j, :]
         self.grid_image = np.array(resized_image)
+
         # Convert to uint8 for imshow
         self.grid_image = self.grid_image.astype(np.uint8)
 
