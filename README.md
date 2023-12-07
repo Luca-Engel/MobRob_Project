@@ -1,7 +1,4 @@
 # MobRob_Project
-![image](https://github.com/Luca-Engel/MobRob_Project/assets/71313761/af526e68-03af-4be9-9f8d-faff662204e0)
 
-
-
-#### Shoutouts
-- Aruco Markers: https://chev.me/arucogen/
+## Video Demo
+The video of the demo can be watched on [YouTube](https://youtu.be/gpMigWjB38A)
