@@ -7,6 +7,8 @@ STOP_MOVING = 0
 STOP = 0
 MOVE = 1
 ROTATE = 2
+TRANSITION_ANGLE = 10
+CHANGE_STATE = 30
 ANGLE_JUMP_TOLERANCE = 280
 
 # Create a class for every instance of the motors
@@ -14,30 +16,26 @@ class Motion:
     """
     This class is used to control the motion of the Thymio
     """
+
     def __init__(self, node):
 
         self.node = node
 
-        self.changing_pose      = False
-        self.nextpoint_achieved = False
-        
-        self.distance     = 0
-        self.angle        = 0
+        self.distance = 0
+        self.angle = 0
         self.normal_speed = 100
-        
-        self.threshold_angle = 2 # Avoiding oscillation on the desired angle
-        self.desired_angle   = 0
-        # Need to calibrate this for the lecture of the angle
-        self.calibration     = 5
+
+        self.threshold_angle = 2  # Avoiding oscillation on the desired angle
+        self.desired_angle = 0
 
         # Regulator parameter
-        self.Kp            = 3         # Finding the parameters of our Pi controller by tuning them during test
-        self.Ki            = 0.2
-        self.sum_error     = 0
+        self.Kp = 3  # Finding the parameters of our Pi controller by tuning them during test
+        self.Ki = 0.2
+        self.sum_error = 0
         self.max_sum_error = 30
-        self.error         = 0
-        self.change_idx    = -1
-        
+        self.error = 0
+        self.change_idx = -1
+
         # Parameters of the Thymio angle and the desired one
         self._total_actual_angle = None
         self._last_actual_angle = None
@@ -59,7 +57,7 @@ class Motion:
         """
         aw(self.node.send_set_variables(self.motors(int(left_speed), int(right_speed))))
 
-    def pi_regulation(self, actual_angle, wanted_angle, movement, change_idx):
+    def motion_regulation(self, actual_angle, wanted_angle, movement, change_idx):
         """"
         The control of the robot is done in this function. We have 3 states that the Thymio can be
         1) STOP: the Thymio has reached a point so we stop for a instance the motors
@@ -116,11 +114,11 @@ class Motion:
             self._last_actual_angle = actual_angle
             self._last_wanted_angle = wanted_angle
 
-        if (change_idx != self.change_idx and abs(self._total_actual_angle - self._total_wanted_angle) > 10):  # < 6 degrees
+        if (change_idx != self.change_idx and abs(self._total_actual_angle - self._total_wanted_angle) > TRANSITION_ANGLE):
             movement = ROTATE
         elif change_idx != self.change_idx:
             self.change_idx = change_idx
-        elif abs(self._total_wanted_angle - self._total_wanted_angle) > 30:
+        elif abs(self._total_wanted_angle - self._total_wanted_angle) > CHANGE_STATE:
             self.change_idx = -1
             movement = ROTATE
 
@@ -138,7 +136,7 @@ class Motion:
 
                 self.error = 0
                 self.sum_error = 0
-            
+
             elif self._total_actual_angle < (self._total_wanted_angle - self.threshold_angle):
                 self.error = abs(self._total_actual_angle - self._total_wanted_angle)
                 if self.error > 330:
@@ -171,7 +169,7 @@ class Motion:
                     right_speed = self.normal_speed - (self.Kp * self.error + self.Ki * self.max_sum_error)
 
             return left_speed, right_speed
-            
+
         # Movement at Rotate means that the robot need to rotate to face the next point
         elif movement == ROTATE:
 
@@ -189,30 +187,8 @@ class Motion:
                 else:
                     left_speed = self.normal_speed
                     right_speed = -self.normal_speed
+
             return left_speed, right_speed
-
-            if self.error >= 0:
-                left_speed = self.normal_speed
-                right_speed = -self.normal_speed
-                return left_speed, right_speed
-
-            if self.error < 0:
-                left_speed = -self.normal_speed
-                right_speed = self.normal_speed
-                return left_speed, right_speed
-
-            else:
-                movement = STOP
-                return STOP_MOVING, STOP_MOVING
-
-
-# def distance_nextpoint(actual_pos, next_pos):
-#     """
-#         Calculate the distance to the next point in
-#         the global navigation
-#     """
-#     return math.sqrt(math.pow((actual_pos[0] - next_pos[0]), 2) + math.pow(actual_pos[1] - next_pos[1], 2))
-
 
 def rotation_nextpoint(direction):
     """

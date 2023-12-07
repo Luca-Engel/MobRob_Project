@@ -99,8 +99,8 @@ async def main(node):
                     break
 
         change_idx = dijkstra._next_direction_change_idx
-        left_speed, right_speed = motion_control.pi_regulation(actual_angle=thymio_angle, wanted_angle=wanted_angle,
-                                                               movement=movement, change_idx=change_idx)
+        left_speed, right_speed = motion_control.motion_regulation(actual_angle=thymio_angle, wanted_angle=wanted_angle,
+                                                                   movement=movement, change_idx=change_idx)
 
         aw(node.set_variables(motion_control.motors(left_speed, right_speed)))
 
