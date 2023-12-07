@@ -57,7 +57,7 @@ class Motion:
         """
         aw(self.node.send_set_variables(self.motors(int(left_speed), int(right_speed))))
 
-    def pi_regulation(self, actual_angle, wanted_angle, movement, change_idx):
+    def motion_regulation(self, actual_angle, wanted_angle, movement, change_idx):
         """"
         The control of the robot is done in this function. We have 3 states that the Thymio can be
         1) STOP: the Thymio has reached a point so we stop for a instance the motors
