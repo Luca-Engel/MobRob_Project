@@ -1,7 +1,14 @@
 # MobRob_Project
-![image](https://github.com/Luca-Engel/MobRob_Project/assets/71313761/af526e68-03af-4be9-9f8d-faff662204e0)
 
+## Video Demo
 
+<div align="center">
+    <video width="700" controls autoplay loop src="./videos/Mobile_Robotics_Final_Demo_Video.mp4" />
+</div>
 
-#### Shoutouts
-- Aruco Markers: https://chev.me/arucogen/
+<div align="center">
+    <em>Video Illustrating the Project Results</em>
+</div>
+
+In case the video does not play, it can also be watched
+on [YouTube](https://youtu.be/gpMigWjB38A)
